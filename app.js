@@ -714,13 +714,13 @@ class TodoTracker {
         if (todo.onHold) {
             const holdStatus = document.createElement('span');
             holdStatus.className = 'hold-status';
-            holdStatus.textContent = 'On Hold';
+            holdStatus.textContent = '홀드 중';
             textWrapper.appendChild(holdStatus);
         }
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-btn';
-        deleteBtn.textContent = 'Delete';
+        deleteBtn.textContent = '삭제';
         deleteBtn.onclick = () => this.deleteTodo(todo.id);
 
         header.appendChild(textWrapper);
@@ -733,14 +733,14 @@ class TodoTracker {
             if (todo.onHold) {
                 const resumeBtn = document.createElement('button');
                 resumeBtn.className = 'resume-btn';
-                resumeBtn.textContent = 'Resume';
+                resumeBtn.textContent = '재개';
                 resumeBtn.disabled = this.runningTodoId !== null;
                 resumeBtn.onclick = () => this.resumeTodo(todo.id);
                 controls.appendChild(resumeBtn);
             } else if (!todo.running) {
                 const startBtn = document.createElement('button');
                 startBtn.className = 'start-btn';
-                startBtn.textContent = 'Start';
+                startBtn.textContent = '시작';
                 startBtn.disabled = this.runningTodoId !== null;
                 startBtn.onclick = () => this.startTodo(todo.id);
                 controls.appendChild(startBtn);
@@ -754,21 +754,21 @@ class TodoTracker {
 
                 const holdBtn = document.createElement('button');
                 holdBtn.className = 'hold-btn';
-                holdBtn.textContent = 'Hold';
+                holdBtn.textContent = '홀드';
                 holdBtn.onclick = () => this.holdTodo(todo.id);
                 controls.appendChild(holdBtn);
             }
 
             const finishBtn = document.createElement('button');
             finishBtn.className = 'finish-btn';
-            finishBtn.textContent = 'Finish';
+            finishBtn.textContent = '완료';
             finishBtn.disabled = (!todo.running && !todo.onHold);
             finishBtn.onclick = () => this.finishTodo(todo.id);
             controls.appendChild(finishBtn);
         } else {
             const elapsed = document.createElement('div');
             elapsed.className = 'elapsed-time';
-            elapsed.textContent = `Completed in ${this.formatTime(todo.elapsedTime)}`;
+            elapsed.textContent = `완료 — ${this.formatTime(todo.elapsedTime)}`;
             controls.appendChild(elapsed);
         }
 
@@ -808,21 +808,21 @@ class TodoTracker {
         const focusTimeItem = document.createElement('div');
         focusTimeItem.className = 'task-stat-item';
         focusTimeItem.innerHTML = `
-            <div class="task-stat-label">Focus Time</div>
+            <div class="task-stat-label">집중 시간</div>
             <div class="task-stat-value">${this.formatTime(focusTime)}</div>
         `;
 
         const holdTimeItem = document.createElement('div');
         holdTimeItem.className = 'task-stat-item';
         holdTimeItem.innerHTML = `
-            <div class="task-stat-label">Hold Time</div>
+            <div class="task-stat-label">홀드 시간</div>
             <div class="task-stat-value">${this.formatTime(totalHoldTime)}</div>
         `;
 
         const holdCountItem = document.createElement('div');
         holdCountItem.className = 'task-stat-item';
         holdCountItem.innerHTML = `
-            <div class="task-stat-label">Hold Count</div>
+            <div class="task-stat-label">홀드 횟수</div>
             <div class="task-stat-value">${holdCount}</div>
         `;
 
@@ -843,7 +843,7 @@ class TodoTracker {
         toggleIcon.className = 'toggle-icon';
         toggleIcon.textContent = '▼';
         title.appendChild(toggleIcon);
-        title.appendChild(document.createTextNode(` Hold History (${todo.holdHistory.length})`));
+        title.appendChild(document.createTextNode(` 홀드 기록 (${todo.holdHistory.length})`));
 
         const list = document.createElement('div');
         list.className = 'hold-history-list';
@@ -867,7 +867,7 @@ class TodoTracker {
             const duration = document.createElement('div');
             duration.className = 'hold-duration';
             const date = new Date(hold.timestamp);
-            duration.textContent = `${date.toLocaleTimeString()} - Hold duration: ${this.formatTime(hold.duration)}`;
+            duration.textContent = `${date.toLocaleTimeString()} — 홀드 시간: ${this.formatTime(hold.duration)}`;
 
             item.appendChild(reason);
             item.appendChild(duration);
@@ -887,10 +887,14 @@ class TodoTracker {
         if (todos.length === 0) {
             const emptyState = document.createElement('div');
             emptyState.className = 'empty-state';
-            emptyState.innerHTML = '<h3>No tasks yet</h3><p>Add a task to get started!</p>';
+            emptyState.innerHTML = '<h3>태스크 없음</h3><p>아래에서 태스크를 추가하세요.</p>';
             this.todoList.appendChild(emptyState);
         } else {
-            todos.forEach(todo => {
+            const sorted = [...todos].sort((a, b) => {
+                if (a.completed === b.completed) return 0;
+                return a.completed ? 1 : -1;
+            });
+            sorted.forEach(todo => {
                 this.todoList.appendChild(this.renderTodoItem(todo));
             });
         }

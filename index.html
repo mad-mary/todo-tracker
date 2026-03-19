@@ -16,14 +16,14 @@
         <header>
             <h1>Mad Mode</h1>
             <div class="tab-switcher">
-                <button id="dailyTab" class="tab-btn active">Daily</button>
-                <button id="weeklyTab" class="tab-btn">Weekly</button>
+                <button id="dailyTab" class="tab-btn active">일별</button>
+                <button id="weeklyTab" class="tab-btn">주별</button>
             </div>
             <div class="date-selector" id="dateSelector">
                 <button id="prevDay" class="nav-btn">&#9664;</button>
                 <input type="date" id="dateInput" />
                 <button id="nextDay" class="nav-btn">&#9654;</button>
-                <button id="todayBtn" class="today-btn">Today</button>
+                <button id="todayBtn" class="today-btn">오늘</button>
             </div>
         </header>
 
@@ -41,8 +41,8 @@
                 <!-- Left Sidebar: Backlog -->
                 <aside class="backlog-sidebar">
                     <div class="backlog-header">
-                        <div class="backlog-title">Backlog</div>
-                        <div class="backlog-subtitle">Previous unresolved</div>
+                        <div class="backlog-title">백로그</div>
+                        <div class="backlog-subtitle">이전 미완료 태스크</div>
                     </div>
                     <div class="backlog-list" id="backlogList">
                         <div class="backlog-empty">No unresolved tasks</div>
@@ -56,29 +56,29 @@
                     <div class="hero-section">
                         <!-- Idle State -->
                         <div class="hero-idle" id="heroIdle">
-                            <div class="hero-idle-title">No active task</div>
-                            <div class="hero-idle-sub">Start a task below to begin tracking</div>
+                            <div class="hero-idle-title">진행 중인 태스크 없음</div>
+                            <div class="hero-idle-sub">아래 목록에서 태스크를 시작하세요</div>
                         </div>
 
                         <!-- Running State -->
                         <div class="hero-active" id="heroActive" style="display:none;">
-                            <div class="hero-badge focus-badge">FOCUS</div>
+                            <div class="hero-badge focus-badge">집중 중</div>
                             <div class="hero-task-name" id="heroTaskName">-</div>
                             <div class="hero-timer" id="heroTimer">00:00:00</div>
                             <div class="hero-actions">
-                                <button class="hero-btn hero-hold-btn" id="heroHoldBtn">Hold</button>
-                                <button class="hero-btn hero-finish-btn" id="heroFinishBtn">Finish</button>
+                                <button class="hero-btn hero-hold-btn" id="heroHoldBtn">홀드</button>
+                                <button class="hero-btn hero-finish-btn" id="heroFinishBtn">완료</button>
                             </div>
                         </div>
 
                         <!-- On Hold State -->
                         <div class="hero-hold-state" id="heroHoldState" style="display:none;">
-                            <div class="hero-badge hold-badge">ON HOLD</div>
+                            <div class="hero-badge hold-badge">홀드 중</div>
                             <div class="hero-task-name" id="heroHoldTaskName">-</div>
                             <div class="hero-hold-reason" id="heroHoldReason">-</div>
                             <div class="hero-actions">
-                                <button class="hero-btn hero-resume-btn" id="heroResumeBtn">Resume</button>
-                                <button class="hero-btn hero-finish-btn" id="heroFinishHoldBtn">Finish</button>
+                                <button class="hero-btn hero-resume-btn" id="heroResumeBtn">재개</button>
+                                <button class="hero-btn hero-finish-btn" id="heroFinishHoldBtn">완료</button>
                             </div>
                         </div>
                     </div>
@@ -86,22 +86,22 @@
                     <!-- Stats Bar -->
                     <div class="stats-bar">
                         <div class="stat-item">
-                            <span class="stat-label">Focus</span>
+                            <span class="stat-label">집중</span>
                             <span class="stat-value" id="focusTime">0m</span>
                         </div>
                         <div class="stat-divider"></div>
                         <div class="stat-item">
-                            <span class="stat-label">Hold</span>
+                            <span class="stat-label">홀드</span>
                             <span class="stat-value" id="holdRatio">0%</span>
                         </div>
                         <div class="stat-divider"></div>
                         <div class="stat-item">
-                            <span class="stat-label">Progress</span>
+                            <span class="stat-label">진행률</span>
                             <span class="stat-value" id="progressValue">0%</span>
                         </div>
                         <div class="stat-divider"></div>
                         <div class="stat-item">
-                            <span class="stat-label">Score</span>
+                            <span class="stat-label">점수</span>
                             <span class="stat-value" id="focusScoreValue">0</span>
                             <span class="stat-unit">/100</span>
                         </div>
@@ -109,22 +109,22 @@
 
                     <!-- Score Breakdown (collapsible) -->
                     <details class="score-details">
-                        <summary>Score breakdown</summary>
+                        <summary>점수 상세</summary>
                         <div class="score-breakdown-grid">
                             <div class="breakdown-row">
-                                <span class="breakdown-label">Completion</span>
+                                <span class="breakdown-label">완료율</span>
                                 <span class="breakdown-value" id="completionBreakdown">0/40</span>
                             </div>
                             <div class="breakdown-row">
-                                <span class="breakdown-label">Efficiency</span>
+                                <span class="breakdown-label">효율성</span>
                                 <span class="breakdown-value" id="efficiencyBreakdown">0/30</span>
                             </div>
                             <div class="breakdown-row">
-                                <span class="breakdown-label">Flow</span>
+                                <span class="breakdown-label">흐름</span>
                                 <span class="breakdown-value" id="flowBreakdown">0/20</span>
                             </div>
                             <div class="breakdown-row">
-                                <span class="breakdown-label">Restart</span>
+                                <span class="breakdown-label">재시작</span>
                                 <span class="breakdown-value" id="restartBreakdown">0/10</span>
                             </div>
                         </div>
@@ -133,8 +133,8 @@
 
                     <!-- Add Task -->
                     <div class="add-todo-section">
-                        <input type="text" id="todoInput" placeholder="Add a new task..." />
-                        <button id="addTodoBtn">Add</button>
+                        <input type="text" id="todoInput" placeholder="새 태스크 추가..." />
+                        <button id="addTodoBtn">추가</button>
                     </div>
 
                     <!-- Task List -->
@@ -165,7 +165,7 @@
             </div>
 
             <div class="weekly-section">
-                <h3>Focus vs Hold</h3>
+                <h3>집중 vs 홀드</h3>
                 <div class="charts-grid">
                     <div class="chart-container">
                         <h4>주별 집중 점수 변동</h4>
@@ -179,14 +179,14 @@
             </div>
 
             <div class="weekly-section">
-                <h3>Top Blockers</h3>
+                <h3>주요 방해 요인</h3>
                 <div class="blockers-list" id="topBlockers"></div>
             </div>
 
             <div class="weekly-section">
                 <div class="stats-row">
                     <div class="stat-box">
-                        <h3>Restart Behavior</h3>
+                        <h3>재시작 패턴</h3>
                         <div class="stat-detail">
                             <span class="stat-label">평균 재시작 시간:</span>
                             <span class="stat-value" id="avgRestartTime">0분</span>
@@ -197,7 +197,7 @@
                         </div>
                     </div>
                     <div class="stat-box">
-                        <h3>Task Efficiency</h3>
+                        <h3>태스크 효율</h3>
                         <div class="stat-detail">
                             <span class="stat-label">평균 태스크 완료 시간:</span>
                             <span class="stat-value" id="avgTaskTime">0분</span>
@@ -215,9 +215,9 @@
     <!-- Hold Reason Modal -->
     <div id="holdModal" class="modal">
         <div class="modal-content">
-            <h2>Hold Reason</h2>
+            <h2>홀드 사유</h2>
             <div class="reason-selector">
-                <label for="holdReasonPreset">Select reason:</label>
+                <label for="holdReasonPreset">사유 선택:</label>
                 <select id="holdReasonPreset">
                     <option value="정의 안됨">정의 안됨</option>
                     <option value="의사결정 필요">의사결정 필요</option>
