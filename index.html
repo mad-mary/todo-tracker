@@ -14,97 +14,136 @@
 <body>
     <div class="container">
         <header>
-            <h1>🔥 Mad Mode</h1>
+            <h1>Mad Mode</h1>
             <div class="tab-switcher">
                 <button id="dailyTab" class="tab-btn active">Daily</button>
                 <button id="weeklyTab" class="tab-btn">Weekly</button>
             </div>
             <div class="date-selector" id="dateSelector">
-                <button id="prevDay" class="nav-btn">◀</button>
+                <button id="prevDay" class="nav-btn">&#9664;</button>
                 <input type="date" id="dateInput" />
-                <button id="nextDay" class="nav-btn">▶</button>
+                <button id="nextDay" class="nav-btn">&#9654;</button>
                 <button id="todayBtn" class="today-btn">Today</button>
             </div>
         </header>
 
+        <!-- Hidden legacy status elements (still needed for JS state updates) -->
+        <div style="display:none;">
+            <div id="statusItem">
+                <div id="statusValue"></div>
+                <div id="statusSubtext"></div>
+            </div>
+        </div>
+
         <div id="dailyView" class="view-container">
-        <div class="dashboard">
-            <div class="dashboard-item status-item" id="statusItem">
-                <div class="dashboard-icon">🔥</div>
-                <div class="dashboard-content">
-                    <div class="dashboard-label">Status</div>
-                    <div class="dashboard-value" id="statusValue">대기 중</div>
-                    <div class="dashboard-subtext" id="statusSubtext"></div>
-                </div>
-            </div>
+            <div class="daily-layout">
 
-            <div class="dashboard-item">
-                <div class="dashboard-icon">⏱</div>
-                <div class="dashboard-content">
-                    <div class="dashboard-label">Focus Time</div>
-                    <div class="dashboard-value" id="focusTime">0m</div>
-                </div>
-            </div>
+                <!-- Left Sidebar: Backlog -->
+                <aside class="backlog-sidebar">
+                    <div class="backlog-header">
+                        <div class="backlog-title">Backlog</div>
+                        <div class="backlog-subtitle">Previous unresolved</div>
+                    </div>
+                    <div class="backlog-list" id="backlogList">
+                        <div class="backlog-empty">No unresolved tasks</div>
+                    </div>
+                </aside>
 
-            <div class="dashboard-item">
-                <div class="dashboard-icon">⚠️</div>
-                <div class="dashboard-content">
-                    <div class="dashboard-label">Hold Ratio</div>
-                    <div class="dashboard-value" id="holdRatio">0%</div>
-                </div>
-            </div>
+                <!-- Main Content -->
+                <div class="daily-main">
 
-            <div class="dashboard-item">
-                <div class="dashboard-icon">🎯</div>
-                <div class="dashboard-content">
-                    <div class="dashboard-label">Progress</div>
-                    <div class="dashboard-value" id="progressValue">0%</div>
+                    <!-- Hero Section: Current Task -->
+                    <div class="hero-section">
+                        <!-- Idle State -->
+                        <div class="hero-idle" id="heroIdle">
+                            <div class="hero-idle-title">No active task</div>
+                            <div class="hero-idle-sub">Start a task below to begin tracking</div>
+                        </div>
+
+                        <!-- Running State -->
+                        <div class="hero-active" id="heroActive" style="display:none;">
+                            <div class="hero-badge focus-badge">FOCUS</div>
+                            <div class="hero-task-name" id="heroTaskName">-</div>
+                            <div class="hero-timer" id="heroTimer">00:00:00</div>
+                            <div class="hero-actions">
+                                <button class="hero-btn hero-hold-btn" id="heroHoldBtn">Hold</button>
+                                <button class="hero-btn hero-finish-btn" id="heroFinishBtn">Finish</button>
+                            </div>
+                        </div>
+
+                        <!-- On Hold State -->
+                        <div class="hero-hold-state" id="heroHoldState" style="display:none;">
+                            <div class="hero-badge hold-badge">ON HOLD</div>
+                            <div class="hero-task-name" id="heroHoldTaskName">-</div>
+                            <div class="hero-hold-reason" id="heroHoldReason">-</div>
+                            <div class="hero-actions">
+                                <button class="hero-btn hero-resume-btn" id="heroResumeBtn">Resume</button>
+                                <button class="hero-btn hero-finish-btn" id="heroFinishHoldBtn">Finish</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Bar -->
+                    <div class="stats-bar">
+                        <div class="stat-item">
+                            <span class="stat-label">Focus</span>
+                            <span class="stat-value" id="focusTime">0m</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-label">Hold</span>
+                            <span class="stat-value" id="holdRatio">0%</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-label">Progress</span>
+                            <span class="stat-value" id="progressValue">0%</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-label">Score</span>
+                            <span class="stat-value" id="focusScoreValue">0</span>
+                            <span class="stat-unit">/100</span>
+                        </div>
+                    </div>
+
+                    <!-- Score Breakdown (collapsible) -->
+                    <details class="score-details">
+                        <summary>Score breakdown</summary>
+                        <div class="score-breakdown-grid">
+                            <div class="breakdown-row">
+                                <span class="breakdown-label">Completion</span>
+                                <span class="breakdown-value" id="completionBreakdown">0/40</span>
+                            </div>
+                            <div class="breakdown-row">
+                                <span class="breakdown-label">Efficiency</span>
+                                <span class="breakdown-value" id="efficiencyBreakdown">0/30</span>
+                            </div>
+                            <div class="breakdown-row">
+                                <span class="breakdown-label">Flow</span>
+                                <span class="breakdown-value" id="flowBreakdown">0/20</span>
+                            </div>
+                            <div class="breakdown-row">
+                                <span class="breakdown-label">Restart</span>
+                                <span class="breakdown-value" id="restartBreakdown">0/10</span>
+                            </div>
+                        </div>
+                        <div class="score-message" id="focusScoreMessage">-</div>
+                    </details>
+
+                    <!-- Add Task -->
+                    <div class="add-todo-section">
+                        <input type="text" id="todoInput" placeholder="Add a new task..." />
+                        <button id="addTodoBtn">Add</button>
+                    </div>
+
+                    <!-- Task List -->
+                    <div class="todo-list" id="todoList"></div>
                 </div>
             </div>
         </div>
 
-        <div class="focus-score-panel">
-            <div class="focus-score-header">
-                <div class="focus-score-title">
-                    <span class="score-icon">📊</span>
-                    <span>Focus Score</span>
-                </div>
-                <div class="focus-score-main">
-                    <span class="score-value" id="focusScoreValue">0</span>
-                    <span class="score-max">/100</span>
-                </div>
-            </div>
-            <div class="focus-score-message" id="focusScoreMessage">-</div>
-            <div class="focus-score-breakdown">
-                <div class="breakdown-item">
-                    <span class="breakdown-label">Completion</span>
-                    <span class="breakdown-value" id="completionBreakdown">0/40</span>
-                </div>
-                <div class="breakdown-item">
-                    <span class="breakdown-label">Efficiency</span>
-                    <span class="breakdown-value" id="efficiencyBreakdown">0/30</span>
-                </div>
-                <div class="breakdown-item">
-                    <span class="breakdown-label">Flow</span>
-                    <span class="breakdown-value" id="flowBreakdown">0/20</span>
-                </div>
-                <div class="breakdown-item">
-                    <span class="breakdown-label">Restart</span>
-                    <span class="breakdown-value" id="restartBreakdown">0/10</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="add-todo-section">
-            <input type="text" id="todoInput" placeholder="Add a new task..." />
-            <button id="addTodoBtn">Add Task</button>
-        </div>
-
-        <div class="todo-list" id="todoList">
-            <!-- Todo items will be dynamically added here -->
-        </div>
-        </div>
-
+        <!-- Weekly View -->
         <div id="weeklyView" class="view-container" style="display: none;">
             <div class="weekly-summary-cards">
                 <div class="weekly-card">
@@ -126,7 +165,7 @@
             </div>
 
             <div class="weekly-section">
-                <h3>📊 Focus vs Hold</h3>
+                <h3>Focus vs Hold</h3>
                 <div class="charts-grid">
                     <div class="chart-container">
                         <h4>주별 집중 점수 변동</h4>
@@ -140,16 +179,14 @@
             </div>
 
             <div class="weekly-section">
-                <h3>⚠️ Top Blockers</h3>
-                <div class="blockers-list" id="topBlockers">
-                    <!-- Dynamically populated -->
-                </div>
+                <h3>Top Blockers</h3>
+                <div class="blockers-list" id="topBlockers"></div>
             </div>
 
             <div class="weekly-section">
                 <div class="stats-row">
                     <div class="stat-box">
-                        <h3>🔁 Restart Behavior</h3>
+                        <h3>Restart Behavior</h3>
                         <div class="stat-detail">
                             <span class="stat-label">평균 재시작 시간:</span>
                             <span class="stat-value" id="avgRestartTime">0분</span>
@@ -160,7 +197,7 @@
                         </div>
                     </div>
                     <div class="stat-box">
-                        <h3>🎯 Task Efficiency</h3>
+                        <h3>Task Efficiency</h3>
                         <div class="stat-detail">
                             <span class="stat-label">평균 태스크 완료 시간:</span>
                             <span class="stat-value" id="avgTaskTime">0분</span>

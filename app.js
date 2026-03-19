@@ -37,11 +37,11 @@ class TodoTracker {
         const onHoldTodo = todos.find(t => t.onHold);
 
         if (runningTodo) {
-            document.title = '🔥 집중 중 - Todo Tracker';
+            document.title = 'FOCUS — Mad Mode';
         } else if (onHoldTodo) {
-            document.title = '⚠️ HOLD - Todo Tracker';
+            document.title = 'ON HOLD — Mad Mode';
         } else {
-            document.title = 'Todo Tracker';
+            document.title = 'Mad Mode';
         }
     }
 
@@ -75,6 +75,21 @@ class TodoTracker {
         this.dailyView = document.getElementById('dailyView');
         this.weeklyView = document.getElementById('weeklyView');
         this.dateSelector = document.getElementById('dateSelector');
+        // Hero elements
+        this.heroSection = document.getElementById('heroSection') || document.querySelector('.hero-section');
+        this.heroIdle = document.getElementById('heroIdle');
+        this.heroActive = document.getElementById('heroActive');
+        this.heroHoldState = document.getElementById('heroHoldState');
+        this.heroTaskName = document.getElementById('heroTaskName');
+        this.heroTimer = document.getElementById('heroTimer');
+        this.heroHoldTaskName = document.getElementById('heroHoldTaskName');
+        this.heroHoldReason = document.getElementById('heroHoldReason');
+        this.heroHoldBtn = document.getElementById('heroHoldBtn');
+        this.heroFinishBtn = document.getElementById('heroFinishBtn');
+        this.heroResumeBtn = document.getElementById('heroResumeBtn');
+        this.heroFinishHoldBtn = document.getElementById('heroFinishHoldBtn');
+        // Backlog
+        this.backlogList = document.getElementById('backlogList');
     }
 
     initEventListeners() {
@@ -115,6 +130,30 @@ class TodoTracker {
 
         this.dailyTab.addEventListener('click', () => this.switchView('daily'));
         this.weeklyTab.addEventListener('click', () => this.switchView('weekly'));
+
+        // Hero button listeners
+        if (this.heroHoldBtn) {
+            this.heroHoldBtn.addEventListener('click', () => {
+                if (this.runningTodoId !== null) this.holdTodo(this.runningTodoId);
+            });
+        }
+        if (this.heroFinishBtn) {
+            this.heroFinishBtn.addEventListener('click', () => {
+                if (this.runningTodoId !== null) this.finishTodo(this.runningTodoId);
+            });
+        }
+        if (this.heroResumeBtn) {
+            this.heroResumeBtn.addEventListener('click', () => {
+                const onHoldTodo = this.getCurrentDateTodos().find(t => t.onHold);
+                if (onHoldTodo) this.resumeTodo(onHoldTodo.id);
+            });
+        }
+        if (this.heroFinishHoldBtn) {
+            this.heroFinishHoldBtn.addEventListener('click', () => {
+                const onHoldTodo = this.getCurrentDateTodos().find(t => t.onHold);
+                if (onHoldTodo) this.finishTodo(onHoldTodo.id);
+            });
+        }
     }
 
     switchView(view) {
@@ -361,6 +400,20 @@ class TodoTracker {
 
         const elapsed = todo.elapsedTime + (Date.now() - todo.startTime);
         timerElement.textContent = this.formatTime(elapsed);
+
+        // Also update hero timer
+        if (this.heroTimer && this.runningTodoId === id) {
+            this.heroTimer.textContent = this.formatTimerDisplay(elapsed);
+        }
+    }
+
+    formatTimerDisplay(ms) {
+        const totalSec = Math.floor(ms / 1000);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        const pad = n => String(n).padStart(2, '0');
+        return `${pad(h)}:${pad(m)}:${pad(s)}`;
     }
 
     formatTime(ms) {
@@ -472,20 +525,20 @@ class TodoTracker {
             : 0;
 
         if (completionRate < 0.5) {
-            message = '🎯 태스크를 더 완료해보세요';
+            message = '태스크를 더 완료해보세요';
         } else if (holdRatio > 0.3 || totalHoldCount > total * 2) {
-            message = '⚠️ Hold가 자주 발생하네요';
+            message = 'Hold가 자주 발생하네요';
         } else if (avgRestartMinutes > 15) {
-            message = '🔁 Hold 후 복귀가 느려요';
+            message = 'Hold 후 복귀가 느려요';
         } else {
             if (totalScore >= 80) {
-                message = '🔥 집중 상태 매우 좋음';
+                message = '집중 상태 매우 좋음';
             } else if (totalScore >= 60) {
-                message = '👍 좋은 흐름이에요!';
+                message = '좋은 흐름이에요!';
             } else if (totalScore >= 40) {
-                message = '⚠️ 조금 더 집중해봐요';
+                message = '조금 더 집중해봐요';
             } else {
-                message = '🚨 집중이 많이 흐트러졌어요';
+                message = '집중이 많이 흐트러졌어요';
             }
         }
 
@@ -578,6 +631,67 @@ class TodoTracker {
         this.efficiencyBreakdown.textContent = `${focusScore.breakdown.efficiency}/30`;
         this.flowBreakdown.textContent = `${focusScore.breakdown.flow}/20`;
         this.restartBreakdown.textContent = `${focusScore.breakdown.restart}/10`;
+
+        this.updateHero();
+    }
+
+    updateHero() {
+        if (!this.heroIdle) return;
+
+        const todos = this.getCurrentDateTodos();
+        const runningTodo = todos.find(t => t.running);
+        const onHoldTodo = todos.find(t => t.onHold);
+
+        this.heroIdle.style.display = 'none';
+        this.heroActive.style.display = 'none';
+        this.heroHoldState.style.display = 'none';
+
+        if (runningTodo) {
+            this.heroActive.style.display = 'flex';
+            this.heroTaskName.textContent = runningTodo.text;
+            const elapsed = runningTodo.elapsedTime + (Date.now() - runningTodo.startTime);
+            this.heroTimer.textContent = this.formatTimerDisplay(elapsed);
+        } else if (onHoldTodo) {
+            this.heroHoldState.style.display = 'flex';
+            this.heroHoldTaskName.textContent = onHoldTodo.text;
+            const lastHold = onHoldTodo.holdHistory[onHoldTodo.holdHistory.length - 1];
+            this.heroHoldReason.textContent = lastHold ? lastHold.reason : '-';
+        } else {
+            this.heroIdle.style.display = 'flex';
+        }
+    }
+
+    renderBacklog() {
+        if (!this.backlogList) return;
+
+        const today = this.currentDate;
+        const allDates = Object.keys(this.todos)
+            .filter(date => date < today)
+            .sort((a, b) => b.localeCompare(a));
+
+        const backlogItems = [];
+        allDates.forEach(date => {
+            (this.todos[date] || [])
+                .filter(t => !t.completed)
+                .forEach(t => backlogItems.push({ text: t.text, date }));
+        });
+
+        if (backlogItems.length === 0) {
+            this.backlogList.innerHTML = '<div class="backlog-empty">No unresolved tasks</div>';
+            return;
+        }
+
+        this.backlogList.innerHTML = backlogItems.map(item => {
+            const [year, month, day] = item.date.split('-').map(Number);
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const dateLabel = `${months[month - 1]} ${day}`;
+            return `
+                <div class="backlog-item">
+                    <div class="backlog-item-date">${dateLabel}</div>
+                    <div class="backlog-item-text">${item.text}</div>
+                </div>
+            `;
+        }).join('');
     }
 
     renderTodoItem(todo) {
@@ -782,6 +896,7 @@ class TodoTracker {
         }
 
         this.updateStats();
+        this.renderBacklog();
     }
 
     getWeekDates() {
