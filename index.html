@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo Tracker</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 Todo Tracker</h1>
+            <div class="tab-switcher">
+                <button id="dailyTab" class="tab-btn active">Daily</button>
+                <button id="weeklyTab" class="tab-btn">Weekly</button>
+            </div>
+            <div class="date-selector" id="dateSelector">
+                <button id="prevDay" class="nav-btn">◀</button>
+                <input type="date" id="dateInput" />
+                <button id="nextDay" class="nav-btn">▶</button>
+                <button id="todayBtn" class="today-btn">Today</button>
+            </div>
+        </header>
+
+        <div id="dailyView" class="view-container">
+        <div class="dashboard">
+            <div class="dashboard-item status-item" id="statusItem">
+                <div class="dashboard-icon">🔥</div>
+                <div class="dashboard-content">
+                    <div class="dashboard-label">Status</div>
+                    <div class="dashboard-value" id="statusValue">대기 중</div>
+                    <div class="dashboard-subtext" id="statusSubtext"></div>
+                </div>
+            </div>
+
+            <div class="dashboard-item">
+                <div class="dashboard-icon">⏱</div>
+                <div class="dashboard-content">
+                    <div class="dashboard-label">Focus Time</div>
+                    <div class="dashboard-value" id="focusTime">0m</div>
+                </div>
+            </div>
+
+            <div class="dashboard-item">
+                <div class="dashboard-icon">⚠️</div>
+                <div class="dashboard-content">
+                    <div class="dashboard-label">Hold Ratio</div>
+                    <div class="dashboard-value" id="holdRatio">0%</div>
+                </div>
+            </div>
+
+            <div class="dashboard-item">
+                <div class="dashboard-icon">🎯</div>
+                <div class="dashboard-content">
+                    <div class="dashboard-label">Progress</div>
+                    <div class="dashboard-value" id="progressValue">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="focus-score-panel">
+            <div class="focus-score-header">
+                <div class="focus-score-title">
+                    <span class="score-icon">📊</span>
+                    <span>Focus Score</span>
+                </div>
+                <div class="focus-score-main">
+                    <span class="score-value" id="focusScoreValue">0</span>
+                    <span class="score-max">/100</span>
+                </div>
+            </div>
+            <div class="focus-score-message" id="focusScoreMessage">-</div>
+            <div class="focus-score-breakdown">
+                <div class="breakdown-item">
+                    <span class="breakdown-label">Completion</span>
+                    <span class="breakdown-value" id="completionBreakdown">0/40</span>
+                </div>
+                <div class="breakdown-item">
+                    <span class="breakdown-label">Efficiency</span>
+                    <span class="breakdown-value" id="efficiencyBreakdown">0/30</span>
+                </div>
+                <div class="breakdown-item">
+                    <span class="breakdown-label">Flow</span>
+                    <span class="breakdown-value" id="flowBreakdown">0/20</span>
+                </div>
+                <div class="breakdown-item">
+                    <span class="breakdown-label">Restart</span>
+                    <span class="breakdown-value" id="restartBreakdown">0/10</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="add-todo-section">
+            <input type="text" id="todoInput" placeholder="Add a new task..." />
+            <button id="addTodoBtn">Add Task</button>
+        </div>
+
+        <div class="todo-list" id="todoList">
+            <!-- Todo items will be dynamically added here -->
+        </div>
+        </div>
+
+        <div id="weeklyView" class="view-container" style="display: none;">
+            <div class="weekly-summary-cards">
+                <div class="weekly-card">
+                    <div class="weekly-card-label">이번 주 집중 점수</div>
+                    <div class="weekly-card-value" id="weeklyFocusScore">0점</div>
+                </div>
+                <div class="weekly-card">
+                    <div class="weekly-card-label">완료율 평균</div>
+                    <div class="weekly-card-value" id="weeklyCompletionRate">0%</div>
+                </div>
+                <div class="weekly-card">
+                    <div class="weekly-card-label">총 집중 시간</div>
+                    <div class="weekly-card-value" id="weeklyFocusTime">0h 0m</div>
+                </div>
+                <div class="weekly-card">
+                    <div class="weekly-card-label">Hold 비율</div>
+                    <div class="weekly-card-value" id="weeklyHoldRatio">0%</div>
+                </div>
+            </div>
+
+            <div class="weekly-section">
+                <h3>📊 Focus vs Hold</h3>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h4>주별 집중 점수 변동</h4>
+                        <canvas id="focusScoreChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h4>집중 vs Hold 시간</h4>
+                        <canvas id="focusHoldChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="weekly-section">
+                <h3>⚠️ Top Blockers</h3>
+                <div class="blockers-list" id="topBlockers">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <div class="weekly-section">
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <h3>🔁 Restart Behavior</h3>
+                        <div class="stat-detail">
+                            <span class="stat-label">평균 재시작 시간:</span>
+                            <span class="stat-value" id="avgRestartTime">0분</span>
+                        </div>
+                        <div class="stat-detail">
+                            <span class="stat-label">최대:</span>
+                            <span class="stat-value" id="maxRestartTime">0분</span>
+                        </div>
+                    </div>
+                    <div class="stat-box">
+                        <h3>🎯 Task Efficiency</h3>
+                        <div class="stat-detail">
+                            <span class="stat-label">평균 태스크 완료 시간:</span>
+                            <span class="stat-value" id="avgTaskTime">0분</span>
+                        </div>
+                        <div class="stat-detail">
+                            <span class="stat-label">Hold 발생률:</span>
+                            <span class="stat-value" id="holdOccurrenceRate">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hold Reason Modal -->
+    <div id="holdModal" class="modal">
+        <div class="modal-content">
+            <h2>Hold Reason</h2>
+            <div class="reason-selector">
+                <label for="holdReasonPreset">Select reason:</label>
+                <select id="holdReasonPreset">
+                    <option value="정의 안됨">정의 안됨</option>
+                    <option value="의사결정 필요">의사결정 필요</option>
+                    <option value="외부 요청">외부 요청</option>
+                    <option value="회의">회의</option>
+                    <option value="집중 깨짐">집중 깨짐</option>
+                    <option value="피로">피로</option>
+                    <option value="기타">기타 (직접 입력)</option>
+                </select>
+            </div>
+            <textarea id="holdReasonInput" placeholder="Additional details (optional)..." style="display: none;"></textarea>
+            <div class="modal-buttons">
+                <button id="confirmHoldBtn" class="confirm-btn">Confirm Hold</button>
+                <button id="cancelHoldBtn" class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
