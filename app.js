@@ -8,12 +8,50 @@ class TodoTracker {
         this.currentView = 'daily';
         this.focusScoreChart = null;
         this.focusHoldChart = null;
+        this.notifiedTasks = new Set();
+        this.pendingEditTodoId = null;
+        this.gistToken = localStorage.getItem('gist_token') || '';
+        this.gistId = localStorage.getItem('gist_id') || '';
+        this.syncIntervalTimer = null;
+        this.SYNC_INTERVAL_MS = 3 * 60 * 60 * 1000; // 3시간
 
         this.initElements();
         this.initEventListeners();
         this.setDateInput();
+        this.requestNotificationPermission();
         this.restoreActiveState();
         this.render();
+        this.updateSyncDot();
+
+        if (this.gistToken && this.gistId) {
+            this.syncFromGist();
+        }
+        this.startSyncInterval();
+        window.addEventListener('beforeunload', () => this.syncToGist());
+    }
+
+    requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    }
+
+    checkOverdueNotification(todo) {
+        if (this.notifiedTasks.has(todo.id)) return;
+
+        const elapsed = todo.elapsedTime + (Date.now() - todo.startTime);
+        if (elapsed < 3600000) return;
+
+        this.notifiedTasks.add(todo.id);
+
+        if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+        const taskName = todo.text.length > 40 ? todo.text.substring(0, 40) + '...' : todo.text;
+        new Notification('⏰ 1시간 경과', {
+            body: `"${taskName}" 태스크가 1시간이 넘도록 진행 중입니다.`,
+            icon: '/favicon.svg',
+            tag: `overdue-${todo.id}`
+        });
     }
 
     restoreActiveState() {
@@ -90,6 +128,23 @@ class TodoTracker {
         this.heroFinishHoldBtn = document.getElementById('heroFinishHoldBtn');
         // Backlog
         this.backlogList = document.getElementById('backlogList');
+        // Edit modal
+        this.editModal = document.getElementById('editModal');
+        this.editTaskInput = document.getElementById('editTaskInput');
+        this.editTaskDate = document.getElementById('editTaskDate');
+        this.confirmEditBtn = document.getElementById('confirmEditBtn');
+        this.cancelEditBtn = document.getElementById('cancelEditBtn');
+        // Settings modal
+        this.settingsModal = document.getElementById('settingsModal');
+        this.settingsBtn = document.getElementById('settingsBtn');
+        this.syncDot = document.getElementById('syncDot');
+        this.gistTokenInput = document.getElementById('gistTokenInput');
+        this.gistIdInput = document.getElementById('gistIdInput');
+        this.confirmSettingsBtn = document.getElementById('confirmSettingsBtn');
+        this.disconnectGistBtn = document.getElementById('disconnectGistBtn');
+        this.cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
+        this.syncStatusRow = document.getElementById('syncStatusRow');
+        this.syncStatusText = document.getElementById('syncStatusText');
     }
 
     initEventListeners() {
@@ -130,6 +185,24 @@ class TodoTracker {
 
         this.dailyTab.addEventListener('click', () => this.switchView('daily'));
         this.weeklyTab.addEventListener('click', () => this.switchView('weekly'));
+
+        this.confirmEditBtn.addEventListener('click', () => this.confirmEdit());
+        this.cancelEditBtn.addEventListener('click', () => this.cancelEdit());
+        this.editModal.addEventListener('click', (e) => {
+            if (e.target === this.editModal) this.cancelEdit();
+        });
+        this.editTaskInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') this.confirmEdit();
+            if (e.key === 'Escape') this.cancelEdit();
+        });
+
+        this.settingsBtn.addEventListener('click', () => this.openSettingsModal());
+        this.confirmSettingsBtn.addEventListener('click', () => this.saveGistSettings());
+        this.disconnectGistBtn.addEventListener('click', () => this.disconnectGist());
+        this.cancelSettingsBtn.addEventListener('click', () => this.settingsModal.classList.remove('active'));
+        this.settingsModal.addEventListener('click', (e) => {
+            if (e.target === this.settingsModal) this.settingsModal.classList.remove('active');
+        });
 
         // Hero button listeners
         if (this.heroHoldBtn) {
@@ -238,6 +311,7 @@ class TodoTracker {
             if (this.runningTodoId === id) {
                 this.stopTimer();
             }
+            this.notifiedTasks.delete(id);
             todos.splice(index, 1);
             this.saveToLocalStorage();
             this.render();
@@ -337,6 +411,182 @@ class TodoTracker {
         this.holdModal.classList.remove('active');
     }
 
+    openEditModal(id) {
+        const todos = this.getCurrentDateTodos();
+        const todo = todos.find(t => t.id === id);
+        if (!todo) return;
+
+        this.pendingEditTodoId = id;
+        this.editTaskInput.value = todo.text;
+        this.editTaskDate.value = this.currentDate;
+        this.editModal.classList.add('active');
+        this.editTaskInput.focus();
+        this.editTaskInput.select();
+    }
+
+    confirmEdit() {
+        if (this.pendingEditTodoId === null) return;
+
+        const newText = this.editTaskInput.value.trim();
+        const newDate = this.editTaskDate.value;
+        if (!newText) return;
+
+        const todos = this.getCurrentDateTodos();
+        const todoIndex = todos.findIndex(t => t.id === this.pendingEditTodoId);
+        if (todoIndex === -1) { this.cancelEdit(); return; }
+
+        const todo = todos[todoIndex];
+        todo.text = newText;
+
+        if (newDate && newDate !== this.currentDate) {
+            if (this.runningTodoId === todo.id) {
+                this.stopCurrentTask();
+            }
+            todos.splice(todoIndex, 1);
+            if (!this.todos[newDate]) {
+                this.todos[newDate] = [];
+            }
+            this.todos[newDate].push(todo);
+        }
+
+        this.saveToLocalStorage();
+        this.cancelEdit();
+        this.render();
+    }
+
+    cancelEdit() {
+        this.pendingEditTodoId = null;
+        this.editModal.classList.remove('active');
+    }
+
+    // ── Gist 설정 모달 ──────────────────────────────
+
+    openSettingsModal() {
+        this.gistTokenInput.value = this.gistToken ? '••••••••••••••••••••' : '';
+        this.gistIdInput.value = this.gistId;
+        this.syncStatusRow.style.display = 'none';
+        this.settingsModal.classList.add('active');
+        if (!this.gistToken) this.gistTokenInput.focus();
+    }
+
+    saveGistSettings() {
+        const tokenVal = this.gistTokenInput.value.trim();
+        const idVal = this.gistIdInput.value.trim();
+
+        // 마스킹된 값이면 기존 토큰 유지
+        if (tokenVal && !tokenVal.startsWith('•')) {
+            this.gistToken = tokenVal;
+            localStorage.setItem('gist_token', this.gistToken);
+        }
+        if (idVal) {
+            this.gistId = idVal;
+            localStorage.setItem('gist_id', this.gistId);
+        }
+
+        this.settingsModal.classList.remove('active');
+        this.startSyncInterval();
+        this.syncToGist();
+    }
+
+    disconnectGist() {
+        this.gistToken = '';
+        this.gistId = '';
+        localStorage.removeItem('gist_token');
+        localStorage.removeItem('gist_id');
+        clearInterval(this.syncIntervalTimer);
+        this.settingsModal.classList.remove('active');
+        this.updateSyncDot('idle');
+    }
+
+    // ── Gist 동기화 ──────────────────────────────────
+
+    updateSyncDot(state) {
+        const dot = this.syncDot;
+        if (!dot) return;
+        dot.className = 'sync-dot';
+        if (!this.gistToken) return;
+        if (state) dot.classList.add(state);
+    }
+
+    showSyncStatus(msg, type = 'info') {
+        this.syncStatusRow.style.display = 'flex';
+        this.syncStatusText.textContent = msg;
+        this.syncStatusText.className = `sync-status-text ${type}`;
+    }
+
+    async syncFromGist() {
+        if (!this.gistToken || !this.gistId) return;
+        this.updateSyncDot('syncing');
+        try {
+            const res = await fetch(`https://api.github.com/gists/${this.gistId}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.gistToken}`,
+                    'Accept': 'application/vnd.github+json'
+                }
+            });
+            if (!res.ok) throw new Error(`${res.status}`);
+            const data = await res.json();
+            const content = data.files['todo-tracker.json']?.content;
+            if (content) {
+                this.todos = JSON.parse(content);
+                localStorage.setItem('todoTrackerData', JSON.stringify(this.todos));
+                this.render();
+            }
+            this.updateSyncDot('synced');
+        } catch (err) {
+            this.updateSyncDot('error');
+        }
+    }
+
+    startSyncInterval() {
+        clearInterval(this.syncIntervalTimer);
+        if (!this.gistToken) return;
+        this.syncIntervalTimer = setInterval(() => this.syncToGist(), this.SYNC_INTERVAL_MS);
+    }
+
+    async syncToGist() {
+        if (!this.gistToken) return;
+        this.updateSyncDot('syncing');
+        try {
+            const content = JSON.stringify(this.todos, null, 2);
+            if (!this.gistId) {
+                const res = await fetch('https://api.github.com/gists', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${this.gistToken}`,
+                        'Accept': 'application/vnd.github+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        description: 'Mad Mode Todo Tracker',
+                        public: false,
+                        files: { 'todo-tracker.json': { content } }
+                    })
+                });
+                if (!res.ok) throw new Error(`${res.status}`);
+                const data = await res.json();
+                this.gistId = data.id;
+                localStorage.setItem('gist_id', this.gistId);
+            } else {
+                const res = await fetch(`https://api.github.com/gists/${this.gistId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${this.gistToken}`,
+                        'Accept': 'application/vnd.github+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        files: { 'todo-tracker.json': { content } }
+                    })
+                });
+                if (!res.ok) throw new Error(`${res.status}`);
+            }
+            this.updateSyncDot('synced');
+        } catch (err) {
+            this.updateSyncDot('error');
+        }
+    }
+
     resumeTodo(id) {
         const todos = this.getCurrentDateTodos();
         const todo = todos.find(t => t.id === id);
@@ -377,6 +627,7 @@ class TodoTracker {
 
         todo.completed = true;
         todo.onHold = false;
+        this.notifiedTasks.delete(id);
         this.saveToLocalStorage();
         this.updatePageTitle();
         this.render();
@@ -405,6 +656,8 @@ class TodoTracker {
         if (this.heroTimer && this.runningTodoId === id) {
             this.heroTimer.textContent = this.formatTimerDisplay(elapsed);
         }
+
+        this.checkOverdueNotification(todo);
     }
 
     formatTimerDisplay(ms) {
@@ -718,12 +971,18 @@ class TodoTracker {
             textWrapper.appendChild(holdStatus);
         }
 
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit-btn';
+        editBtn.textContent = '수정';
+        editBtn.onclick = () => this.openEditModal(todo.id);
+
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-btn';
         deleteBtn.textContent = '삭제';
         deleteBtn.onclick = () => this.deleteTodo(todo.id);
 
         header.appendChild(textWrapper);
+        header.appendChild(editBtn);
         header.appendChild(deleteBtn);
 
         const controls = document.createElement('div');

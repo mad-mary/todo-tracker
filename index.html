@@ -25,6 +25,10 @@
                 <button id="nextDay" class="nav-btn">&#9654;</button>
                 <button id="todayBtn" class="today-btn">오늘</button>
             </div>
+            <button class="settings-btn" id="settingsBtn" title="Gist 동기화 설정">
+                <span class="sync-dot" id="syncDot"></span>
+                ⚙
+            </button>
         </header>
 
         <!-- Hidden legacy status elements (still needed for JS state updates) -->
@@ -208,6 +212,50 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gist Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h2>GitHub Gist 동기화</h2>
+            <p class="settings-desc">GitHub Personal Access Token을 입력하면 모든 기기에서 동일한 데이터를 사용할 수 있습니다.</p>
+            <div class="edit-field">
+                <label for="gistTokenInput">GitHub Personal Access Token</label>
+                <input type="password" id="gistTokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
+                <div class="field-hint">Settings → Developer settings → Personal access tokens → <strong>gist</strong> 권한 필요</div>
+            </div>
+            <div class="edit-field">
+                <label for="gistIdInput">Gist ID <span style="font-weight:400;color:var(--text-faint)">(첫 연결 시 자동 생성)</span></label>
+                <input type="text" id="gistIdInput" placeholder="자동 생성됩니다" />
+            </div>
+            <div class="sync-status-row" id="syncStatusRow" style="display:none;">
+                <span class="sync-status-text" id="syncStatusText"></span>
+            </div>
+            <div class="modal-buttons">
+                <button id="confirmSettingsBtn" class="confirm-btn">연결 / 저장</button>
+                <button id="disconnectGistBtn" class="cancel-btn">연결 해제</button>
+                <button id="cancelSettingsBtn" class="cancel-btn">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Task Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h2>태스크 수정</h2>
+            <div class="edit-field">
+                <label for="editTaskInput">내용</label>
+                <input type="text" id="editTaskInput" placeholder="태스크 내용..." />
+            </div>
+            <div class="edit-field">
+                <label for="editTaskDate">날짜 이동</label>
+                <input type="date" id="editTaskDate" />
+            </div>
+            <div class="modal-buttons">
+                <button id="confirmEditBtn" class="confirm-btn">저장</button>
+                <button id="cancelEditBtn" class="cancel-btn">취소</button>
             </div>
         </div>
     </div>
