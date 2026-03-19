@@ -1,4 +1,4 @@
-class MadMode {
+class TodoTracker {
     constructor() {
         this.currentDate = this.formatDate(new Date());
         this.todos = this.loadFromLocalStorage();
@@ -268,12 +268,12 @@ class MadMode {
     }
 
     loadFromLocalStorage() {
-        const data = localStorage.getItem('madModeData');
+        const data = localStorage.getItem('todoTrackerData');
         return data ? JSON.parse(data) : {};
     }
 
     saveToLocalStorage() {
-        localStorage.setItem('madModeData', JSON.stringify(this.todos));
+        localStorage.setItem('todoTrackerData', JSON.stringify(this.todos));
     }
 
     getCurrentDateTodos() {
@@ -526,10 +526,10 @@ class MadMode {
             });
             if (!res.ok) throw new Error(`${res.status}`);
             const data = await res.json();
-            const content = data.files['mad-mode.json']?.content;
+            const content = data.files['todo-tracker.json']?.content;
             if (content) {
                 this.todos = JSON.parse(content);
-                localStorage.setItem('madModeData', JSON.stringify(this.todos));
+                localStorage.setItem('todoTrackerData', JSON.stringify(this.todos));
                 this.render();
             }
             this.updateSyncDot('synced');
@@ -560,7 +560,7 @@ class MadMode {
                     body: JSON.stringify({
                         description: 'Mad Mode Todo Tracker',
                         public: false,
-                        files: { 'mad-mode.json': { content } }
+                        files: { 'todo-tracker.json': { content } }
                     })
                 });
                 if (!res.ok) throw new Error(`${res.status}`);
@@ -576,7 +576,7 @@ class MadMode {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        files: { 'mad-mode.json': { content } }
+                        files: { 'todo-tracker.json': { content } }
                     })
                 });
                 if (!res.ok) throw new Error(`${res.status}`);
@@ -1395,5 +1395,5 @@ class MadMode {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    new MadMode();
+    new TodoTracker();
 });
