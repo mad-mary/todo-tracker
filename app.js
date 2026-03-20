@@ -14,6 +14,17 @@ class TodoTracker {
         this.gistId = localStorage.getItem('gist_id') || '';
         this.syncIntervalTimer = null;
         this.SYNC_INTERVAL_MS = 3 * 60 * 60 * 1000; // 3시간
+        this.tags = this.loadTags();
+        this.selectedTagIds = [];
+        this.editSelectedTagIds = [];
+        this.pendingTagColor = '#FF6B6B';
+        this.TAG_COLORS = ['#FF6B6B', '#F59B23', '#1DB954', '#45B7D1', '#BB8FCE', '#F8A5C2', '#78E8C0', '#85C1E9'];
+        this.habits = this.loadHabits();
+        this.calendarYear = new Date().getFullYear();
+        this.calendarMonth = new Date().getMonth();
+        this.pendingHabitStamp = '📚';
+        this.pendingHabitColor = '#1DB954';
+        this.STAMPS = ['📚','✏️','🏃','💪','🎯','🍎','💧','🧘','📝','🎵','🌟','🔥','😊','🎨','🍵','🌙','☀️','🐣','🦋','⭐'];
 
         this.initElements();
         this.initEventListeners();
@@ -28,6 +39,7 @@ class TodoTracker {
         }
         this.startSyncInterval();
         window.addEventListener('beforeunload', () => this.syncToGist());
+        this.renderAddTagSelector();
     }
 
     requestNotificationPermission() {
@@ -134,6 +146,29 @@ class TodoTracker {
         this.editTaskDate = document.getElementById('editTaskDate');
         this.confirmEditBtn = document.getElementById('confirmEditBtn');
         this.cancelEditBtn = document.getElementById('cancelEditBtn');
+        // Calendar
+        this.calendarTab = document.getElementById('calendarTab');
+        this.calendarView = document.getElementById('calendarView');
+        this.calPrevMonth = document.getElementById('calPrevMonth');
+        this.calNextMonth = document.getElementById('calNextMonth');
+        this.addHabitBtn = document.getElementById('addHabitBtn');
+        this.habitModal = document.getElementById('habitModal');
+        this.habitNameInput = document.getElementById('habitNameInput');
+        this.habitEndDateInput = document.getElementById('habitEndDateInput');
+        this.confirmHabitBtn = document.getElementById('confirmHabitBtn');
+        this.cancelHabitBtn = document.getElementById('cancelHabitBtn');
+        this.stampModal = document.getElementById('stampModal');
+        this.closeStampModal = document.getElementById('closeStampModal');
+        // Tag management
+        this.tagManageBtn = document.getElementById('tagManageBtn');
+        this.tagManageModal = document.getElementById('tagManageModal');
+        this.tagNameInput = document.getElementById('tagNameInput');
+        this.tagColorSwatches = document.getElementById('tagColorSwatches');
+        this.addTagBtn = document.getElementById('addTagBtn');
+        this.tagManageList = document.getElementById('tagManageList');
+        this.closeTagManageBtn = document.getElementById('closeTagManageBtn');
+        this.tagSelectorContainer = document.getElementById('tagSelectorContainer');
+        this.editTagContainer = document.getElementById('editTagContainer');
         // Settings modal
         this.settingsModal = document.getElementById('settingsModal');
         this.settingsBtn = document.getElementById('settingsBtn');
@@ -196,6 +231,36 @@ class TodoTracker {
             if (e.key === 'Escape') this.cancelEdit();
         });
 
+        this.calendarTab.addEventListener('click', () => this.switchView('calendar'));
+        this.calPrevMonth.addEventListener('click', () => {
+            this.calendarMonth--;
+            if (this.calendarMonth < 0) { this.calendarMonth = 11; this.calendarYear--; }
+            this.renderCalendar();
+        });
+        this.calNextMonth.addEventListener('click', () => {
+            this.calendarMonth++;
+            if (this.calendarMonth > 11) { this.calendarMonth = 0; this.calendarYear++; }
+            this.renderCalendar();
+        });
+        this.addHabitBtn.addEventListener('click', () => this.openHabitModal());
+        this.confirmHabitBtn.addEventListener('click', () => this.confirmHabit());
+        this.cancelHabitBtn.addEventListener('click', () => this.habitModal.classList.remove('active'));
+        this.habitModal.addEventListener('click', (e) => {
+            if (e.target === this.habitModal) this.habitModal.classList.remove('active');
+        });
+        this.closeStampModal.addEventListener('click', () => this.stampModal.classList.remove('active'));
+        this.stampModal.addEventListener('click', (e) => {
+            if (e.target === this.stampModal) this.stampModal.classList.remove('active');
+        });
+        this.tagManageBtn.addEventListener('click', () => this.openTagManageModal());
+        this.closeTagManageBtn.addEventListener('click', () => this.tagManageModal.classList.remove('active'));
+        this.tagManageModal.addEventListener('click', (e) => {
+            if (e.target === this.tagManageModal) this.tagManageModal.classList.remove('active');
+        });
+        this.addTagBtn.addEventListener('click', () => this.addTag());
+        this.tagNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.addTag();
+        });
         this.settingsBtn.addEventListener('click', () => this.openSettingsModal());
         this.confirmSettingsBtn.addEventListener('click', () => this.saveGistSettings());
         this.disconnectGistBtn.addEventListener('click', () => this.disconnectGist());
@@ -231,20 +296,26 @@ class TodoTracker {
 
     switchView(view) {
         this.currentView = view;
+        this.dailyTab.classList.remove('active');
+        this.weeklyTab.classList.remove('active');
+        this.calendarTab.classList.remove('active');
+        this.dailyView.style.display = 'none';
+        this.weeklyView.style.display = 'none';
+        this.calendarView.style.display = 'none';
+        this.dateSelector.style.display = 'none';
 
         if (view === 'daily') {
             this.dailyTab.classList.add('active');
-            this.weeklyTab.classList.remove('active');
             this.dailyView.style.display = 'block';
-            this.weeklyView.style.display = 'none';
             this.dateSelector.style.display = 'flex';
-        } else {
+        } else if (view === 'weekly') {
             this.weeklyTab.classList.add('active');
-            this.dailyTab.classList.remove('active');
             this.weeklyView.style.display = 'block';
-            this.dailyView.style.display = 'none';
-            this.dateSelector.style.display = 'none';
             this.renderWeeklySummary();
+        } else if (view === 'calendar') {
+            this.calendarTab.classList.add('active');
+            this.calendarView.style.display = 'block';
+            this.renderCalendar();
         }
     }
 
@@ -276,6 +347,235 @@ class TodoTracker {
         localStorage.setItem('todoTrackerData', JSON.stringify(this.todos));
     }
 
+    loadTags() {
+        const data = localStorage.getItem('todoTrackerTags');
+        return data ? JSON.parse(data) : [];
+    }
+
+    saveTags() {
+        localStorage.setItem('todoTrackerTags', JSON.stringify(this.tags));
+    }
+
+    loadHabits() {
+        const data = localStorage.getItem('todoTrackerHabits');
+        return data ? JSON.parse(data) : [];
+    }
+
+    saveHabits() {
+        localStorage.setItem('todoTrackerHabits', JSON.stringify(this.habits));
+    }
+
+    // ── 캘린더 ────────────────────────────────────
+
+    renderCalendar() {
+        const year = this.calendarYear;
+        const month = this.calendarMonth;
+        const monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+        document.getElementById('calMonthLabel').textContent = `${year}년 ${monthNames[month]}`;
+
+        const firstDayOfWeek = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const today = this.formatDate(new Date());
+
+        const monthStart = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+        const monthEnd = `${year}-${String(month + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+        const activeHabits = this.habits.filter(h => h.startDate <= monthEnd && h.endDate >= monthStart);
+
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = '';
+
+        ['일','월','화','수','목','금','토'].forEach(d => {
+            const h = document.createElement('div');
+            h.className = 'cal-day-header';
+            h.textContent = d;
+            grid.appendChild(h);
+        });
+
+        for (let i = 0; i < firstDayOfWeek; i++) {
+            const empty = document.createElement('div');
+            empty.className = 'cal-cell empty';
+            grid.appendChild(empty);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const cell = document.createElement('div');
+            cell.className = 'cal-cell';
+            if (dateStr === today) cell.classList.add('today');
+
+            const dayNum = document.createElement('div');
+            dayNum.className = 'cal-day-num';
+            dayNum.textContent = day;
+            cell.appendChild(dayNum);
+
+            const dayHabits = activeHabits.filter(h => h.startDate <= dateStr && h.endDate >= dateStr);
+
+            if (dayHabits.length > 0) {
+                const stampsDiv = document.createElement('div');
+                stampsDiv.className = 'cal-stamps';
+                dayHabits.forEach(habit => {
+                    const stamped = !!habit.stamps[dateStr];
+                    const el = document.createElement('span');
+                    el.className = `cal-stamp ${stamped ? 'stamped' : 'unstamped'}`;
+                    el.textContent = habit.stamp;
+                    el.title = habit.name;
+                    el.style.setProperty('--habit-color', habit.color);
+                    stampsDiv.appendChild(el);
+                });
+                cell.appendChild(stampsDiv);
+                cell.style.cursor = 'pointer';
+                cell.addEventListener('click', () => this.openStampModal(dateStr, dayHabits));
+            }
+
+            grid.appendChild(cell);
+        }
+
+        this.renderHabitLegend(activeHabits);
+    }
+
+    renderHabitLegend(habits) {
+        const legend = document.getElementById('habitLegend');
+        if (!habits || habits.length === 0) {
+            legend.innerHTML = '';
+            return;
+        }
+        const today = this.formatDate(new Date());
+        legend.innerHTML = habits.map(h => {
+            const stamped = Object.keys(h.stamps || {}).length;
+            const remaining = h.endDate >= today
+                ? Math.round((new Date(h.endDate) - new Date(today)) / 86400000) + 1
+                : 0;
+            return `
+                <div class="habit-legend-item" style="--habit-color: ${h.color}">
+                    <span class="habit-legend-stamp">${h.stamp}</span>
+                    <span class="habit-legend-name">${h.name}</span>
+                    <span class="habit-legend-count">${stamped}일 완료 · D-${remaining}</span>
+                    <button class="habit-delete-btn" data-habit-id="${h.id}" title="삭제">✕</button>
+                </div>
+            `;
+        }).join('');
+        legend.querySelectorAll('.habit-delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteHabit(Number(btn.dataset.habitId));
+            });
+        });
+    }
+
+openStampModal(dateStr, habits) {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        document.getElementById('stampModalDate').textContent = `${y}년 ${m}월 ${d}일`;
+
+        const container = document.getElementById('stampModalHabits');
+        container.innerHTML = '';
+
+        habits.forEach(habit => {
+            const item = document.createElement('div');
+            item.className = 'stamp-modal-item';
+
+            const label = document.createElement('div');
+            label.className = 'stamp-modal-label';
+            label.innerHTML = `<span class="stamp-modal-emoji">${habit.stamp}</span><span>${habit.name}</span>`;
+
+            const btn = document.createElement('button');
+            const update = () => {
+                const stamped = !!habit.stamps[dateStr];
+                btn.className = `stamp-toggle-btn ${stamped ? 'stamped' : ''}`;
+                btn.textContent = stamped ? '✓ 완료' : '스탬프 찍기';
+                btn.style.setProperty('--habit-color', habit.color);
+            };
+            update();
+            btn.addEventListener('click', () => {
+                this.toggleStamp(habit.id, dateStr);
+                update();
+                this.renderCalendar();
+            });
+
+            item.appendChild(label);
+            item.appendChild(btn);
+            container.appendChild(item);
+        });
+
+        this.stampModal.classList.add('active');
+    }
+
+    toggleStamp(habitId, dateStr) {
+        const habit = this.habits.find(h => h.id === habitId);
+        if (!habit) return;
+        if (habit.stamps[dateStr]) delete habit.stamps[dateStr];
+        else habit.stamps[dateStr] = true;
+        this.saveHabits();
+    }
+
+    openHabitModal() {
+        this.habitNameInput.value = '';
+        this.habitEndDateInput.value = '';
+        this.pendingHabitStamp = this.STAMPS[0];
+        this.pendingHabitColor = this.TAG_COLORS[2]; // green
+        this.renderStampPicker();
+        this.renderHabitColorSwatches();
+        this.habitModal.classList.add('active');
+        this.habitNameInput.focus();
+    }
+
+    renderStampPicker() {
+        const picker = document.getElementById('stampPicker');
+        picker.innerHTML = this.STAMPS.map(s => `
+            <span class="stamp-option ${s === this.pendingHabitStamp ? 'selected' : ''}" data-stamp="${s}">${s}</span>
+        `).join('');
+        picker.querySelectorAll('.stamp-option').forEach(el => {
+            el.addEventListener('click', () => {
+                this.pendingHabitStamp = el.dataset.stamp;
+                this.renderStampPicker();
+            });
+        });
+    }
+
+    renderHabitColorSwatches() {
+        const container = document.getElementById('habitColorSwatches');
+        container.innerHTML = this.TAG_COLORS.map(color => `
+            <span class="tag-color-swatch ${color === this.pendingHabitColor ? 'selected' : ''}" data-color="${color}" style="background: ${color}"></span>
+        `).join('');
+        container.querySelectorAll('.tag-color-swatch').forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                this.pendingHabitColor = swatch.dataset.color;
+                this.renderHabitColorSwatches();
+            });
+        });
+    }
+
+    confirmHabit() {
+        const name = this.habitNameInput.value.trim();
+        const endDate = this.habitEndDateInput.value;
+        if (!name || !endDate) {
+            if (!name) this.habitNameInput.style.outline = '2px solid #FF6B6B';
+            if (!endDate) this.habitEndDateInput.style.outline = '2px solid #FF6B6B';
+            setTimeout(() => {
+                this.habitNameInput.style.outline = '';
+                this.habitEndDateInput.style.outline = '';
+            }, 1200);
+            return;
+        }
+        this.habits.push({
+            id: Date.now(),
+            name,
+            endDate,
+            startDate: this.formatDate(new Date()),
+            stamp: this.pendingHabitStamp,
+            color: this.pendingHabitColor,
+            stamps: {}
+        });
+        this.saveHabits();
+        this.habitModal.classList.remove('active');
+        this.renderCalendar();
+    }
+
+    deleteHabit(id) {
+        this.habits = this.habits.filter(h => h.id !== id);
+        this.saveHabits();
+        this.renderCalendar();
+    }
+
     getCurrentDateTodos() {
         if (!this.todos[this.currentDate]) {
             this.todos[this.currentDate] = [];
@@ -290,6 +590,7 @@ class TodoTracker {
         const todo = {
             id: Date.now(),
             text: text,
+            tags: [...this.selectedTagIds],
             completed: false,
             startTime: null,
             elapsedTime: 0,
@@ -300,7 +601,120 @@ class TodoTracker {
 
         this.getCurrentDateTodos().push(todo);
         this.todoInput.value = '';
+        this.selectedTagIds = [];
+        this.renderAddTagSelector();
         this.saveToLocalStorage();
+        this.render();
+    }
+
+    renderAddTagSelector() {
+        if (!this.tagSelectorContainer) return;
+        if (this.tags.length === 0) {
+            this.tagSelectorContainer.innerHTML = '';
+            return;
+        }
+        this.tagSelectorContainer.innerHTML = this.tags.map(tag => {
+            const selected = this.selectedTagIds.includes(tag.id);
+            return `<span class="tag-chip ${selected ? 'selected' : ''}" data-tag-id="${tag.id}" style="--tag-color: ${tag.color}">${tag.name}</span>`;
+        }).join('');
+        this.tagSelectorContainer.querySelectorAll('.tag-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const tagId = Number(chip.dataset.tagId);
+                const idx = this.selectedTagIds.indexOf(tagId);
+                if (idx === -1) this.selectedTagIds.push(tagId);
+                else this.selectedTagIds.splice(idx, 1);
+                this.renderAddTagSelector();
+            });
+        });
+    }
+
+    renderEditTagSelector() {
+        if (!this.editTagContainer) return;
+        if (this.tags.length === 0) {
+            this.editTagContainer.innerHTML = '<span style="color: var(--text-faint); font-size: 12px;">등록된 태그 없음 — 🏷 버튼으로 추가하세요</span>';
+            return;
+        }
+        this.editTagContainer.innerHTML = this.tags.map(tag => {
+            const selected = this.editSelectedTagIds.includes(tag.id);
+            return `<span class="tag-chip ${selected ? 'selected' : ''}" data-tag-id="${tag.id}" style="--tag-color: ${tag.color}">${tag.name}</span>`;
+        }).join('');
+        this.editTagContainer.querySelectorAll('.tag-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const tagId = Number(chip.dataset.tagId);
+                const idx = this.editSelectedTagIds.indexOf(tagId);
+                if (idx === -1) this.editSelectedTagIds.push(tagId);
+                else this.editSelectedTagIds.splice(idx, 1);
+                this.renderEditTagSelector();
+            });
+        });
+    }
+
+    openTagManageModal() {
+        this.tagNameInput.value = '';
+        this.pendingTagColor = this.TAG_COLORS[0];
+        this.renderTagColorSwatches();
+        this.renderTagManageList();
+        this.tagManageModal.classList.add('active');
+        this.tagNameInput.focus();
+    }
+
+    renderTagColorSwatches() {
+        this.tagColorSwatches.innerHTML = this.TAG_COLORS.map(color => {
+            const selected = color === this.pendingTagColor;
+            return `<span class="tag-color-swatch ${selected ? 'selected' : ''}" data-color="${color}" style="background: ${color}"></span>`;
+        }).join('');
+        this.tagColorSwatches.querySelectorAll('.tag-color-swatch').forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                this.pendingTagColor = swatch.dataset.color;
+                this.renderTagColorSwatches();
+            });
+        });
+    }
+
+    renderTagManageList() {
+        if (this.tags.length === 0) {
+            this.tagManageList.innerHTML = '<div style="color: var(--text-faint); font-size: 13px; padding: 8px 0;">등록된 태그가 없습니다</div>';
+            return;
+        }
+        this.tagManageList.innerHTML = this.tags.map(tag => `
+            <div class="tag-manage-item">
+                <span class="tag-chip" style="--tag-color: ${tag.color}">${tag.name}</span>
+                <button class="tag-delete-btn" data-tag-id="${tag.id}">삭제</button>
+            </div>
+        `).join('');
+        this.tagManageList.querySelectorAll('.tag-delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.deleteTag(Number(btn.dataset.tagId)));
+        });
+    }
+
+    addTag() {
+        const name = this.tagNameInput.value.trim();
+        if (!name) return;
+        if (this.tags.some(t => t.name === name)) {
+            this.tagNameInput.style.outline = '2px solid #FF6B6B';
+            setTimeout(() => this.tagNameInput.style.outline = '', 1200);
+            return;
+        }
+        this.tags.push({ id: Date.now(), name, color: this.pendingTagColor });
+        this.saveTags();
+        this.tagNameInput.value = '';
+        this.renderTagManageList();
+        this.renderAddTagSelector();
+    }
+
+    deleteTag(id) {
+        this.tags = this.tags.filter(t => t.id !== id);
+        Object.values(this.todos).forEach(dayTodos => {
+            dayTodos.forEach(todo => {
+                if (todo.tags) todo.tags = todo.tags.filter(tagId => tagId !== id);
+            });
+        });
+        this.selectedTagIds = this.selectedTagIds.filter(tagId => tagId !== id);
+        this.editSelectedTagIds = this.editSelectedTagIds.filter(tagId => tagId !== id);
+        this.saveTags();
+        this.saveToLocalStorage();
+        this.renderTagManageList();
+        this.renderAddTagSelector();
         this.render();
     }
 
@@ -419,6 +833,8 @@ class TodoTracker {
         this.pendingEditTodoId = id;
         this.editTaskInput.value = todo.text;
         this.editTaskDate.value = this.currentDate;
+        this.editSelectedTagIds = [...(todo.tags || [])];
+        this.renderEditTagSelector();
         this.editModal.classList.add('active');
         this.editTaskInput.focus();
         this.editTaskInput.select();
@@ -437,6 +853,7 @@ class TodoTracker {
 
         const todo = todos[todoIndex];
         todo.text = newText;
+        todo.tags = [...this.editSelectedTagIds];
 
         if (newDate && newDate !== this.currentDate) {
             if (this.runningTodoId === todo.id) {
@@ -528,9 +945,20 @@ class TodoTracker {
             const data = await res.json();
             const content = data.files['todo-tracker.json']?.content;
             if (content) {
-                this.todos = JSON.parse(content);
+                const parsed = JSON.parse(content);
+                if (parsed.todos) {
+                    this.todos = parsed.todos;
+                    this.tags = parsed.tags || this.tags;
+                    this.habits = parsed.habits || this.habits;
+                } else {
+                    this.todos = parsed;
+                }
+                this.saveTags();
+                this.saveHabits();
                 localStorage.setItem('todoTrackerData', JSON.stringify(this.todos));
+                this.renderAddTagSelector();
                 this.render();
+                if (this.currentView === 'calendar') this.renderCalendar();
             }
             this.updateSyncDot('synced');
         } catch (err) {
@@ -548,7 +976,7 @@ class TodoTracker {
         if (!this.gistToken) return;
         this.updateSyncDot('syncing');
         try {
-            const content = JSON.stringify(this.todos, null, 2);
+            const content = JSON.stringify({ todos: this.todos, tags: this.tags, habits: this.habits }, null, 2);
             if (!this.gistId) {
                 const res = await fetch('https://api.github.com/gists', {
                     method: 'POST',
@@ -1032,6 +1460,23 @@ class TodoTracker {
         }
 
         div.appendChild(header);
+
+        if (todo.tags && todo.tags.length > 0) {
+            const tagRow = document.createElement('div');
+            tagRow.className = 'todo-tag-row';
+            todo.tags.forEach(tagId => {
+                const tag = this.tags.find(t => t.id === tagId);
+                if (tag) {
+                    const chip = document.createElement('span');
+                    chip.className = 'tag-chip-small';
+                    chip.style.setProperty('--tag-color', tag.color);
+                    chip.textContent = tag.name;
+                    tagRow.appendChild(chip);
+                }
+            });
+            div.appendChild(tagRow);
+        }
+
         div.appendChild(controls);
 
         if (todo.running || todo.onHold || todo.completed) {
@@ -1179,17 +1624,32 @@ class TodoTracker {
 
     getWeeklyData() {
         const weekDates = this.getWeekDates();
+        const tagData = {};
+        this.tags.forEach(tag => {
+            tagData[tag.id] = { name: tag.name, color: tag.color, total: 0, completed: 0, focusTime: 0 };
+        });
+
         const weeklyData = {
             dates: weekDates,
             dailyScores: [],
             dailyFocusTimes: [],
             dailyHoldTimes: [],
-            allTodos: []
+            allTodos: [],
+            tagData
         };
 
         weekDates.forEach(date => {
             const todos = this.todos[date] || [];
             weeklyData.allTodos.push(...todos);
+            todos.forEach(todo => {
+                (todo.tags || []).forEach(tagId => {
+                    if (tagData[tagId]) {
+                        tagData[tagId].total++;
+                        if (todo.completed) tagData[tagId].completed++;
+                        tagData[tagId].focusTime += todo.elapsedTime;
+                    }
+                });
+            });
 
             const dailyScore = this.calculateDailyScore(date);
             weeklyData.dailyScores.push(dailyScore);
@@ -1302,6 +1762,29 @@ class TodoTracker {
         document.getElementById('holdOccurrenceRate').textContent = `${holdOccurrence}%`;
 
         this.renderCharts(weeklyData);
+        this.renderTagWeeklyBreakdown(weeklyData.tagData);
+    }
+
+    renderTagWeeklyBreakdown(tagData) {
+        const container = document.getElementById('tagWeeklyBreakdown');
+        if (!container) return;
+        const entries = Object.entries(tagData).filter(([, d]) => d.total > 0);
+        if (entries.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-faint); text-align: center; padding: 12px 0;">이번 주 태그된 태스크 없음</p>';
+            return;
+        }
+        container.innerHTML = entries.map(([, d]) => `
+            <div class="tag-weekly-card">
+                <div class="tag-weekly-header">
+                    <span class="tag-chip-small" style="--tag-color: ${d.color}">${d.name}</span>
+                </div>
+                <div class="tag-weekly-stats">
+                    <div class="tag-stat"><span class="tag-stat-label">태스크</span><span class="tag-stat-value">${d.total}개</span></div>
+                    <div class="tag-stat"><span class="tag-stat-label">완료율</span><span class="tag-stat-value">${d.total > 0 ? Math.round(d.completed / d.total * 100) : 0}%</span></div>
+                    <div class="tag-stat"><span class="tag-stat-label">집중 시간</span><span class="tag-stat-value">${this.formatTime(d.focusTime)}</span></div>
+                </div>
+            </div>
+        `).join('');
     }
 
     renderCharts(weeklyData) {

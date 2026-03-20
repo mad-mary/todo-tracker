@@ -18,6 +18,7 @@
             <div class="tab-switcher">
                 <button id="dailyTab" class="tab-btn active">일별</button>
                 <button id="weeklyTab" class="tab-btn">주별</button>
+                <button id="calendarTab" class="tab-btn">캘린더</button>
             </div>
             <div class="date-selector" id="dateSelector">
                 <button id="prevDay" class="nav-btn">&#9664;</button>
@@ -25,6 +26,7 @@
                 <button id="nextDay" class="nav-btn">&#9654;</button>
                 <button id="todayBtn" class="today-btn">오늘</button>
             </div>
+            <button class="tag-manage-btn" id="tagManageBtn" title="태그 관리">🏷</button>
             <button class="settings-btn" id="settingsBtn" title="Gist 동기화 설정">
                 <span class="sync-dot" id="syncDot"></span>
                 ⚙
@@ -137,8 +139,11 @@
 
                     <!-- Add Task -->
                     <div class="add-todo-section">
-                        <input type="text" id="todoInput" placeholder="새 태스크 추가..." />
-                        <button id="addTodoBtn">추가</button>
+                        <div class="add-todo-row">
+                            <input type="text" id="todoInput" placeholder="새 태스크 추가..." />
+                            <button id="addTodoBtn">추가</button>
+                        </div>
+                        <div class="tag-selector-container" id="tagSelectorContainer"></div>
                     </div>
 
                     <!-- Task List -->
@@ -188,6 +193,11 @@
             </div>
 
             <div class="weekly-section">
+                <h3>태그별 분석</h3>
+                <div class="tag-weekly-breakdown" id="tagWeeklyBreakdown"></div>
+            </div>
+
+            <div class="weekly-section">
                 <div class="stats-row">
                     <div class="stat-box">
                         <h3>재시작 패턴</h3>
@@ -212,6 +222,74 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tag Manage Modal -->
+    <div id="tagManageModal" class="modal">
+        <div class="modal-content">
+            <h2>태그 관리</h2>
+            <div class="tag-add-form">
+                <input type="text" id="tagNameInput" placeholder="태그 이름 (최대 10자)..." maxlength="10" />
+                <div class="tag-color-swatches" id="tagColorSwatches"></div>
+                <button id="addTagBtn" class="confirm-btn">태그 추가</button>
+            </div>
+            <div class="tag-manage-list" id="tagManageList"></div>
+            <div class="modal-buttons">
+                <button id="closeTagManageBtn" class="cancel-btn">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar View -->
+    <div id="calendarView" class="view-container" style="display: none;">
+        <div class="cal-toolbar">
+            <div class="cal-nav">
+                <button id="calPrevMonth" class="nav-btn">&#9664;</button>
+                <span id="calMonthLabel" class="cal-month-label"></span>
+                <button id="calNextMonth" class="nav-btn">&#9654;</button>
+            </div>
+            <button id="addHabitBtn" class="add-habit-btn">+ 습관 추가</button>
+        </div>
+        <div class="habit-legend" id="habitLegend"></div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+
+    <!-- Habit Add Modal -->
+    <div id="habitModal" class="modal">
+        <div class="modal-content">
+            <h2>습관 추가</h2>
+            <div class="edit-field">
+                <label for="habitNameInput">이름</label>
+                <input type="text" id="habitNameInput" placeholder="예: 영어 원서읽기" maxlength="20" />
+            </div>
+            <div class="edit-field">
+                <label for="habitEndDateInput">목표 마감일</label>
+                <input type="date" id="habitEndDateInput" />
+            </div>
+            <div class="edit-field">
+                <label>스탬프</label>
+                <div class="stamp-picker" id="stampPicker"></div>
+            </div>
+            <div class="edit-field">
+                <label>색상</label>
+                <div class="tag-color-swatches" id="habitColorSwatches"></div>
+            </div>
+            <div class="modal-buttons">
+                <button id="confirmHabitBtn" class="confirm-btn">추가</button>
+                <button id="cancelHabitBtn" class="cancel-btn">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stamp Day Modal -->
+    <div id="stampModal" class="modal">
+        <div class="modal-content">
+            <h2 id="stampModalDate"></h2>
+            <div id="stampModalHabits"></div>
+            <div class="modal-buttons">
+                <button id="closeStampModal" class="cancel-btn">닫기</button>
             </div>
         </div>
     </div>
@@ -252,6 +330,10 @@
             <div class="edit-field">
                 <label for="editTaskDate">날짜 이동</label>
                 <input type="date" id="editTaskDate" />
+            </div>
+            <div class="edit-field">
+                <label>태그</label>
+                <div class="tag-selector-container" id="editTagContainer"></div>
             </div>
             <div class="modal-buttons">
                 <button id="confirmEditBtn" class="confirm-btn">저장</button>
