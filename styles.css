@@ -1427,7 +1427,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* ── Motivation Quote ─────────────────────────────── */
 
 .motivation-quote {
-    padding: 24px 20px 20px;
+    padding: 16px 0 0;
+    margin-top: 16px;
+    border-top: 1px solid var(--border);
     text-align: center;
 }
 
