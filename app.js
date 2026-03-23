@@ -26,6 +26,28 @@ class TodoTracker {
         this.pendingHabitColor = '#1DB954';
         this.pendingHabitDays = [];
         this.STAMPS = ['📚','✏️','🏃','💪','🎯','🍎','💧','🧘','📝','🎵','🌟','🔥','😊','🎨','🍵','🌙','☀️','🐣','🦋','⭐'];
+        this.QUOTES = [
+            { text: '우리는 반복적으로 하는 행동의 결과물이다. 탁월함은 행동이 아니라 습관이다.', author: '아리스토텔레스' },
+            { text: '작은 습관이 쌓여 위대한 삶이 된다.', author: 'James Clear' },
+            { text: '동기는 시작하게 하지만, 습관이 계속하게 만든다.', author: 'Jim Ryun' },
+            { text: '성공은 매일의 작은 노력이 쌓인 결과다.', author: 'Robert Collier' },
+            { text: '당신이 하는 일이 곧 당신이 된다.', author: 'Epictetus' },
+            { text: '한 번에 한 걸음씩. 그것이 산을 오르는 방법이다.', author: '아프리카 속담' },
+            { text: '나무를 심기에 가장 좋은 때는 20년 전이었다. 두 번째로 좋은 때는 지금이다.', author: '중국 속담' },
+            { text: '완벽한 계획보다 불완전한 실행이 낫다.', author: '조지 패튼' },
+            { text: '당신의 미래는 오늘 당신이 하는 것에 달려 있다.', author: '마하트마 간디' },
+            { text: '변화는 어렵다. 변하지 않는 것은 더 어렵다.', author: 'James Baldwin' },
+            { text: '규칙적인 삶은 창조적인 일을 위한 최고의 토대다.', author: '귀스타브 플로베르' },
+            { text: '한 가지 일을 매일 두렵더라도 해라.', author: '엘리너 루스벨트' },
+            { text: '시간이 지나면 하지 않은 일이 한 일보다 더 후회된다.', author: 'Mark Twain' },
+            { text: '전진하는 한, 속도는 문제가 되지 않는다.', author: '공자' },
+            { text: '오늘 할 수 있는 일을 내일로 미루지 마라.', author: '벤자민 프랭클린' },
+            { text: '1%씩 나아지면 1년 후엔 37배 성장한다.', author: 'James Clear' },
+            { text: '처음엔 당신이 습관을 만들고, 그다음엔 습관이 당신을 만든다.', author: 'John Dryden' },
+            { text: '시작이 반이다.', author: '아리스토텔레스' },
+            { text: '지금 이 순간도 언젠가는 그리워하게 된다.', author: '' },
+            { text: '지속성은 재능을 이긴다. 재능 있지만 꾸준하지 못한 사람은 흔하다.', author: 'Calvin Coolidge' },
+        ];
 
         this.taskHistoryCache = null;
 
@@ -379,7 +401,21 @@ class TodoTracker {
 
     // ── 캘린더 ────────────────────────────────────
 
+    renderMotivationQuote() {
+        const el = document.getElementById('motivationQuote');
+        if (!el) return;
+        // 날짜 기반 시드로 하루 동안 같은 문구 유지
+        const today = this.formatDate(new Date());
+        const seed = today.replace(/-/g, '') | 0;
+        const quote = this.QUOTES[seed % this.QUOTES.length];
+        el.innerHTML = `
+            <div class="motivation-quote-text">${quote.text}</div>
+            ${quote.author ? `<div class="motivation-quote-author">— ${quote.author}</div>` : ''}
+        `;
+    }
+
     renderCalendar() {
+        this.renderMotivationQuote();
         const year = this.calendarYear;
         const month = this.calendarMonth;
         const monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];

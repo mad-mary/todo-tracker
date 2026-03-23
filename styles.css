@@ -1416,6 +1416,42 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     white-space: nowrap;
 }
 
+/* ── Motivation Quote ─────────────────────────────── */
+
+.motivation-quote {
+    padding: 24px 20px 20px;
+    text-align: center;
+}
+
+.motivation-quote-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.55;
+    letter-spacing: -0.01em;
+}
+
+.motivation-quote-text::before {
+    content: '"';
+    color: var(--text-faint);
+    font-size: 20px;
+    font-weight: 400;
+}
+
+.motivation-quote-text::after {
+    content: '"';
+    color: var(--text-faint);
+    font-size: 20px;
+    font-weight: 400;
+}
+
+.motivation-quote-author {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-faint);
+    letter-spacing: 0.03em;
+}
+
 /* ── Streak Dashboard ─────────────────────────────── */
 
 .streak-dashboard {
