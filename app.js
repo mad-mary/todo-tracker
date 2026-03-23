@@ -26,6 +26,8 @@ class TodoTracker {
         this.pendingHabitColor = '#1DB954';
         this.STAMPS = ['📚','✏️','🏃','💪','🎯','🍎','💧','🧘','📝','🎵','🌟','🔥','😊','🎨','🍵','🌙','☀️','🐣','🦋','⭐'];
 
+        this.taskHistoryCache = null;
+
         this.initElements();
         this.initEventListeners();
         this.setDateInput();
@@ -39,7 +41,6 @@ class TodoTracker {
         }
         this.startSyncInterval();
         window.addEventListener('beforeunload', () => this.syncToGist());
-        this.renderAddTagSelector();
         this.initDropZone();
         this.initTaskHistoryAutocomplete();
     }
@@ -60,7 +61,7 @@ class TodoTracker {
 
         if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
-        const taskName = todo.text.length > 40 ? todo.text.substring(0, 40) + '...' : todo.text;
+        const taskName = this.truncate(todo.text, 40);
         new Notification('⏰ 1시간 경과', {
             body: `"${taskName}" 태스크가 1시간이 넘도록 진행 중입니다.`,
             icon: '/favicon.svg',
@@ -71,7 +72,6 @@ class TodoTracker {
     restoreActiveState() {
         const todos = this.getCurrentDateTodos();
         const runningTodo = todos.find(t => t.running);
-        const onHoldTodo = todos.find(t => t.onHold);
 
         if (runningTodo) {
             this.runningTodoId = runningTodo.id;
@@ -183,6 +183,8 @@ class TodoTracker {
         this.cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
         this.syncStatusRow = document.getElementById('syncStatusRow');
         this.syncStatusText = document.getElementById('syncStatusText');
+        this.addTodoSection = document.querySelector('.add-todo-section');
+        this.streakSummaryEl = null;
     }
 
     initEventListeners() {
@@ -348,6 +350,11 @@ class TodoTracker {
 
     saveToLocalStorage() {
         localStorage.setItem('todoTrackerData', JSON.stringify(this.todos));
+        this.taskHistoryCache = null;
+    }
+
+    truncate(text, max) {
+        return text.length > max ? text.substring(0, max) + '...' : text;
     }
 
     loadTags() {
@@ -438,13 +445,16 @@ class TodoTracker {
     }
 
     renderStreakSummary(habits) {
-        let el = document.getElementById('streakSummary');
-        if (!el) {
-            el = document.createElement('div');
-            el.id = 'streakSummary';
-            const grid = document.getElementById('calendarGrid');
-            grid.parentNode.insertBefore(el, grid);
+        if (!this.streakSummaryEl) {
+            this.streakSummaryEl = document.getElementById('streakSummary');
         }
+        if (!this.streakSummaryEl) {
+            this.streakSummaryEl = document.createElement('div');
+            this.streakSummaryEl.id = 'streakSummary';
+            const grid = document.getElementById('calendarGrid');
+            grid.parentNode.insertBefore(this.streakSummaryEl, grid);
+        }
+        const el = this.streakSummaryEl;
 
         if (!habits || habits.length === 0) {
             el.innerHTML = '';
@@ -524,7 +534,7 @@ class TodoTracker {
         });
     }
 
-openStampModal(dateStr, habits) {
+    openStampModal(dateStr, habits) {
         const [y, m, d] = dateStr.split('-').map(Number);
         document.getElementById('stampModalDate').textContent = `${y}년 ${m}월 ${d}일`;
 
@@ -593,17 +603,21 @@ openStampModal(dateStr, habits) {
         });
     }
 
-    renderHabitColorSwatches() {
-        const container = document.getElementById('habitColorSwatches');
+    renderColorSwatches(container, selectedColor, onSelect) {
         container.innerHTML = this.TAG_COLORS.map(color => `
-            <span class="tag-color-swatch ${color === this.pendingHabitColor ? 'selected' : ''}" data-color="${color}" style="background: ${color}"></span>
+            <span class="tag-color-swatch ${color === selectedColor ? 'selected' : ''}" data-color="${color}" style="background: ${color}"></span>
         `).join('');
         container.querySelectorAll('.tag-color-swatch').forEach(swatch => {
-            swatch.addEventListener('click', () => {
-                this.pendingHabitColor = swatch.dataset.color;
-                this.renderHabitColorSwatches();
-            });
+            swatch.addEventListener('click', () => onSelect(swatch.dataset.color));
         });
+    }
+
+    renderHabitColorSwatches() {
+        this.renderColorSwatches(
+            document.getElementById('habitColorSwatches'),
+            this.pendingHabitColor,
+            (color) => { this.pendingHabitColor = color; this.renderHabitColorSwatches(); }
+        );
     }
 
     confirmHabit() {
@@ -673,16 +687,18 @@ openStampModal(dateStr, habits) {
     // ── Feature 1: 태스크 기록 자동완성 ─────────────
 
     getTaskHistory(filter = '') {
-        const counts = {};
-        Object.values(this.todos).forEach(dayTodos => {
-            dayTodos.forEach(t => {
-                const key = t.text.trim();
-                if (key) counts[key] = (counts[key] || 0) + 1;
+        if (!this.taskHistoryCache) {
+            const counts = {};
+            Object.values(this.todos).forEach(dayTodos => {
+                dayTodos.forEach(t => {
+                    const key = t.text.trim();
+                    if (key) counts[key] = (counts[key] || 0) + 1;
+                });
             });
-        });
-        return Object.entries(counts)
+            this.taskHistoryCache = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        }
+        return this.taskHistoryCache
             .filter(([text]) => !filter || text.toLowerCase().includes(filter.toLowerCase()))
-            .sort((a, b) => b[1] - a[1])
             .slice(0, 7)
             .map(([text]) => text);
     }
@@ -780,7 +796,7 @@ openStampModal(dateStr, habits) {
     }
 
     initDropZone() {
-        const zone = document.querySelector('.add-todo-section');
+        const zone = this.addTodoSection;
         if (!zone) return;
 
         zone.addEventListener('dragover', (e) => {
@@ -815,46 +831,46 @@ openStampModal(dateStr, habits) {
         this.render();
     }
 
-    renderAddTagSelector() {
-        if (!this.tagSelectorContainer) return;
+    renderTagChips(container, selectedIds, onToggle, emptyHtml = '') {
+        if (!container) return;
         if (this.tags.length === 0) {
-            this.tagSelectorContainer.innerHTML = '';
+            container.innerHTML = emptyHtml;
             return;
         }
-        this.tagSelectorContainer.innerHTML = this.tags.map(tag => {
-            const selected = this.selectedTagIds.includes(tag.id);
+        container.innerHTML = this.tags.map(tag => {
+            const selected = selectedIds.includes(tag.id);
             return `<span class="tag-chip ${selected ? 'selected' : ''}" data-tag-id="${tag.id}" style="--tag-color: ${tag.color}">${tag.name}</span>`;
         }).join('');
-        this.tagSelectorContainer.querySelectorAll('.tag-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                const tagId = Number(chip.dataset.tagId);
+        container.querySelectorAll('.tag-chip').forEach(chip => {
+            chip.addEventListener('click', () => onToggle(Number(chip.dataset.tagId)));
+        });
+    }
+
+    renderAddTagSelector() {
+        this.renderTagChips(
+            this.tagSelectorContainer,
+            this.selectedTagIds,
+            (tagId) => {
                 const idx = this.selectedTagIds.indexOf(tagId);
                 if (idx === -1) this.selectedTagIds.push(tagId);
                 else this.selectedTagIds.splice(idx, 1);
                 this.renderAddTagSelector();
-            });
-        });
+            }
+        );
     }
 
     renderEditTagSelector() {
-        if (!this.editTagContainer) return;
-        if (this.tags.length === 0) {
-            this.editTagContainer.innerHTML = '<span style="color: var(--text-faint); font-size: 12px;">등록된 태그 없음 — 🏷 버튼으로 추가하세요</span>';
-            return;
-        }
-        this.editTagContainer.innerHTML = this.tags.map(tag => {
-            const selected = this.editSelectedTagIds.includes(tag.id);
-            return `<span class="tag-chip ${selected ? 'selected' : ''}" data-tag-id="${tag.id}" style="--tag-color: ${tag.color}">${tag.name}</span>`;
-        }).join('');
-        this.editTagContainer.querySelectorAll('.tag-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                const tagId = Number(chip.dataset.tagId);
+        this.renderTagChips(
+            this.editTagContainer,
+            this.editSelectedTagIds,
+            (tagId) => {
                 const idx = this.editSelectedTagIds.indexOf(tagId);
                 if (idx === -1) this.editSelectedTagIds.push(tagId);
                 else this.editSelectedTagIds.splice(idx, 1);
                 this.renderEditTagSelector();
-            });
-        });
+            },
+            '<span style="color: var(--text-faint); font-size: 12px;">등록된 태그 없음 — 🏷 버튼으로 추가하세요</span>'
+        );
     }
 
     openTagManageModal() {
@@ -867,16 +883,11 @@ openStampModal(dateStr, habits) {
     }
 
     renderTagColorSwatches() {
-        this.tagColorSwatches.innerHTML = this.TAG_COLORS.map(color => {
-            const selected = color === this.pendingTagColor;
-            return `<span class="tag-color-swatch ${selected ? 'selected' : ''}" data-color="${color}" style="background: ${color}"></span>`;
-        }).join('');
-        this.tagColorSwatches.querySelectorAll('.tag-color-swatch').forEach(swatch => {
-            swatch.addEventListener('click', () => {
-                this.pendingTagColor = swatch.dataset.color;
-                this.renderTagColorSwatches();
-            });
-        });
+        this.renderColorSwatches(
+            this.tagColorSwatches,
+            this.pendingTagColor,
+            (color) => { this.pendingTagColor = color; this.renderTagColorSwatches(); }
+        );
     }
 
     renderTagManageList() {
@@ -1165,7 +1176,7 @@ openStampModal(dateStr, habits) {
                 }
                 this.saveTags();
                 this.saveHabits();
-                localStorage.setItem('todoTrackerData', JSON.stringify(this.todos));
+                this.saveToLocalStorage();
                 this.renderAddTagSelector();
                 this.render();
                 if (this.currentView === 'calendar') this.renderCalendar();
@@ -1457,16 +1468,11 @@ openStampModal(dateStr, habits) {
         if (activeTodo) {
             if (activeTodo.running) {
                 this.statusItem.classList.add('active');
-                const taskName = activeTodo.text.length > 25
-                    ? activeTodo.text.substring(0, 25) + '...'
-                    : activeTodo.text;
-                this.statusValue.textContent = taskName;
+                this.statusValue.textContent = this.truncate(activeTodo.text, 25);
                 this.statusSubtext.textContent = 'FOCUS';
             } else if (activeTodo.onHold) {
                 this.statusItem.classList.add('on-hold');
-                const taskName = activeTodo.text.length > 25
-                    ? activeTodo.text.substring(0, 25) + '...'
-                    : activeTodo.text;
+                const taskName = this.truncate(activeTodo.text, 25);
 
                 const lastHold = activeTodo.holdHistory[activeTodo.holdHistory.length - 1];
                 const holdDuration = Date.now() - lastHold.holdStartTime;
@@ -1573,7 +1579,7 @@ openStampModal(dateStr, habits) {
         }
 
         this.backlogList.innerHTML = backlogItems.map(item => {
-            const [year, month, day] = item.date.split('-').map(Number);
+            const [, month, day] = item.date.split('-').map(Number);
             const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
             const dateLabel = `${months[month - 1]} ${day}`;
             return `
@@ -1584,23 +1590,26 @@ openStampModal(dateStr, habits) {
             `;
         }).join('');
 
-        this.backlogList.querySelectorAll('.backlog-item').forEach(el => {
-            el.addEventListener('click', () => {
-                this.currentDate = el.dataset.date;
-                this.setDateInput();
-                this.render();
-            });
-            el.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', JSON.stringify({
-                    todoId: Number(el.dataset.todoId),
-                    fromDate: el.dataset.date
-                }));
-                el.classList.add('dragging');
-            });
-            el.addEventListener('dragend', () => {
-                el.classList.remove('dragging');
-            });
-        });
+        this.backlogList.onclick = (e) => {
+            const el = e.target.closest('.backlog-item');
+            if (!el) return;
+            this.currentDate = el.dataset.date;
+            this.setDateInput();
+            this.render();
+        };
+        this.backlogList.ondragstart = (e) => {
+            const el = e.target.closest('.backlog-item');
+            if (!el) return;
+            e.dataTransfer.setData('text/plain', JSON.stringify({
+                todoId: Number(el.dataset.todoId),
+                fromDate: el.dataset.date
+            }));
+            el.classList.add('dragging');
+        };
+        this.backlogList.ondragend = (e) => {
+            const el = e.target.closest('.backlog-item');
+            if (el) el.classList.remove('dragging');
+        };
     }
 
     renderTodoItem(todo) {
