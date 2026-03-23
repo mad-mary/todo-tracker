@@ -472,11 +472,10 @@ class TodoTracker {
                     ${items.map(h => `
                         <div class="streak-card-v2 ${h.streak > 0 ? 'active' : 'inactive'}" style="--habit-color:${h.color}">
                             <div class="streak-card-top">
-                                <span class="streak-card-stamp">${h.stamp}</span>
                                 ${h.todayDone ? '<span class="streak-today-badge">오늘 완료</span>' : ''}
                             </div>
                             <div class="streak-card-number ${h.streak > 0 ? '' : 'zero'}">
-                                ${h.streak > 0 ? '🔥' : '—'} ${h.streak}
+                                ${h.streak > 0 ? h.stamp : '—'} ${h.streak}
                             </div>
                             <div class="streak-card-label">일 연속</div>
                             <div class="streak-card-name">${h.name}</div>
