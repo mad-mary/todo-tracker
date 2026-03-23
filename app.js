@@ -157,6 +157,7 @@ class TodoTracker {
         this.addHabitBtn = document.getElementById('addHabitBtn');
         this.habitModal = document.getElementById('habitModal');
         this.habitNameInput = document.getElementById('habitNameInput');
+        this.habitStartDateInput = document.getElementById('habitStartDateInput');
         this.habitEndDateInput = document.getElementById('habitEndDateInput');
         this.confirmHabitBtn = document.getElementById('confirmHabitBtn');
         this.cancelHabitBtn = document.getElementById('cancelHabitBtn');
@@ -581,6 +582,7 @@ class TodoTracker {
 
     openHabitModal() {
         this.habitNameInput.value = '';
+        this.habitStartDateInput.value = this.formatDate(new Date());
         this.habitEndDateInput.value = '';
         this.pendingHabitStamp = this.STAMPS[0];
         this.pendingHabitColor = this.TAG_COLORS[2]; // green
@@ -642,12 +644,15 @@ class TodoTracker {
 
     confirmHabit() {
         const name = this.habitNameInput.value.trim();
+        const startDate = this.habitStartDateInput.value;
         const endDate = this.habitEndDateInput.value;
-        if (!name || !endDate) {
+        if (!name || !startDate || !endDate) {
             if (!name) this.habitNameInput.style.outline = '2px solid #FF6B6B';
+            if (!startDate) this.habitStartDateInput.style.outline = '2px solid #FF6B6B';
             if (!endDate) this.habitEndDateInput.style.outline = '2px solid #FF6B6B';
             setTimeout(() => {
                 this.habitNameInput.style.outline = '';
+                this.habitStartDateInput.style.outline = '';
                 this.habitEndDateInput.style.outline = '';
             }, 1200);
             return;
@@ -656,7 +661,7 @@ class TodoTracker {
             id: Date.now(),
             name,
             endDate,
-            startDate: this.formatDate(new Date()),
+            startDate,
             stamp: this.pendingHabitStamp,
             color: this.pendingHabitColor,
             days: [...this.pendingHabitDays],
