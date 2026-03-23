@@ -2,8 +2,8 @@ class TodoTracker {
     constructor() {
         this.currentDate = this.formatDate(new Date());
         this.todos = this.loadFromLocalStorage();
-        this.runningTimer = null;
-        this.runningTodoId = null;
+        this.runningTimers = new Map(); // id → intervalId
+        this.runningTodoId = null; // 히어로에 표시할 기준 태스크
         this.pendingHoldTodoId = null;
         this.currentView = 'daily';
         this.focusScoreChart = null;
@@ -94,24 +94,21 @@ class TodoTracker {
 
     restoreActiveState() {
         const todos = this.getCurrentDateTodos();
-        const runningTodo = todos.find(t => t.running);
-
-        if (runningTodo) {
-            this.runningTodoId = runningTodo.id;
-            this.runningTimer = setInterval(() => {
-                this.updateTimer(runningTodo.id);
-            }, 1000);
-        }
-
+        todos.filter(t => t.running).forEach(todo => {
+            this.runningTodoId = todo.id;
+            this.runningTimers.set(todo.id, setInterval(() => this.updateTimer(todo.id), 1000));
+        });
         this.updatePageTitle();
     }
 
     updatePageTitle() {
         const todos = this.getCurrentDateTodos();
-        const runningTodo = todos.find(t => t.running);
+        const runningCount = todos.filter(t => t.running).length;
         const onHoldTodo = todos.find(t => t.onHold);
 
-        if (runningTodo) {
+        if (runningCount > 1) {
+            document.title = `FOCUS ×${runningCount} — Mad Mode`;
+        } else if (runningCount === 1) {
             document.title = 'FOCUS — Mad Mode';
         } else if (onHoldTodo) {
             document.title = 'ON HOLD — Mad Mode';
@@ -1016,8 +1013,8 @@ class TodoTracker {
         const todos = this.getCurrentDateTodos();
         const index = todos.findIndex(t => t.id === id);
         if (index !== -1) {
-            if (this.runningTodoId === id) {
-                this.stopTimer();
+            if (this.runningTimers.has(id)) {
+                this.stopTask(id);
             }
             this.notifiedTasks.delete(id);
             todos.splice(index, 1);
@@ -1027,41 +1024,29 @@ class TodoTracker {
     }
 
     startTodo(id) {
-        if (this.runningTodoId !== null) {
-            this.stopCurrentTask();
-        }
-
         const todos = this.getCurrentDateTodos();
         const todo = todos.find(t => t.id === id);
-        if (!todo) return;
+        if (!todo || todo.running) return;
 
         todo.running = true;
         todo.startTime = Date.now();
         this.runningTodoId = id;
-
-        this.runningTimer = setInterval(() => {
-            this.updateTimer(id);
-        }, 1000);
+        this.runningTimers.set(id, setInterval(() => this.updateTimer(id), 1000));
 
         this.saveToLocalStorage();
         this.updatePageTitle();
         this.render();
     }
 
-    stopCurrentTask() {
-        if (this.runningTodoId === null) return;
-
+    stopTask(id) {
         const todos = this.getCurrentDateTodos();
-        const todo = todos.find(t => t.id === this.runningTodoId);
+        const todo = todos.find(t => t.id === id);
         if (todo && todo.running) {
-            const elapsed = Date.now() - todo.startTime;
-            todo.elapsedTime += elapsed;
+            todo.elapsedTime += Date.now() - todo.startTime;
             todo.running = false;
             todo.startTime = null;
         }
-
-        this.stopTimer();
-        this.saveToLocalStorage();
+        this.stopTimer(id);
     }
 
     holdTodo(id) {
@@ -1104,7 +1089,7 @@ class TodoTracker {
         todo.onHold = true;
         todo.startTime = null;
 
-        this.stopTimer();
+        this.stopTimer(this.pendingHoldTodoId);
         this.saveToLocalStorage();
         this.cancelHold();
         this.updatePageTitle();
@@ -1152,8 +1137,8 @@ class TodoTracker {
         todo.memo = this.editMemoInput.value.trim();
 
         if (newDate && newDate !== this.currentDate) {
-            if (this.runningTodoId === todo.id) {
-                this.stopCurrentTask();
+            if (this.runningTimers.has(todo.id)) {
+                this.stopTask(todo.id);
             }
             todos.splice(todoIndex, 1);
             if (!this.todos[newDate]) {
@@ -1325,10 +1310,7 @@ class TodoTracker {
         todo.running = true;
         todo.startTime = Date.now();
         this.runningTodoId = id;
-
-        this.runningTimer = setInterval(() => {
-            this.updateTimer(id);
-        }, 1000);
+        this.runningTimers.set(id, setInterval(() => this.updateTimer(id), 1000));
 
         this.saveToLocalStorage();
         this.updatePageTitle();
@@ -1336,7 +1318,7 @@ class TodoTracker {
     }
 
     finishTodo(id) {
-        this.stopCurrentTask();
+        this.stopTask(id);
 
         const todos = this.getCurrentDateTodos();
         const todo = todos.find(t => t.id === id);
@@ -1357,12 +1339,14 @@ class TodoTracker {
         this.render();
     }
 
-    stopTimer() {
-        if (this.runningTimer) {
-            clearInterval(this.runningTimer);
-            this.runningTimer = null;
+    stopTimer(id) {
+        clearInterval(this.runningTimers.get(id));
+        this.runningTimers.delete(id);
+        if (this.runningTodoId === id) {
+            this.runningTodoId = this.runningTimers.size > 0
+                ? [...this.runningTimers.keys()].at(-1)
+                : null;
         }
-        this.runningTodoId = null;
     }
 
     updateTimer(id) {
@@ -1611,17 +1595,20 @@ class TodoTracker {
         if (!this.heroIdle) return;
 
         const todos = this.getCurrentDateTodos();
-        const runningTodo = todos.find(t => t.running);
+        const runningTodos = todos.filter(t => t.running);
         const onHoldTodo = todos.find(t => t.onHold);
 
         this.heroIdle.style.display = 'none';
         this.heroActive.style.display = 'none';
         this.heroHoldState.style.display = 'none';
 
-        if (runningTodo) {
+        if (runningTodos.length > 0) {
             this.heroActive.style.display = 'flex';
-            this.heroTaskName.textContent = runningTodo.text;
-            const elapsed = runningTodo.elapsedTime + (Date.now() - runningTodo.startTime);
+            const primary = runningTodos.find(t => t.id === this.runningTodoId) || runningTodos[0];
+            this.heroTaskName.textContent = runningTodos.length > 1
+                ? `${primary.text} 외 ${runningTodos.length - 1}개`
+                : primary.text;
+            const elapsed = primary.elapsedTime + (Date.now() - primary.startTime);
             this.heroTimer.textContent = this.formatTimerDisplay(elapsed);
         } else if (onHoldTodo) {
             this.heroHoldState.style.display = 'flex';
@@ -1733,14 +1720,14 @@ class TodoTracker {
                 const resumeBtn = document.createElement('button');
                 resumeBtn.className = 'resume-btn';
                 resumeBtn.textContent = '재개';
-                resumeBtn.disabled = this.runningTodoId !== null;
+                resumeBtn.disabled = false;
                 resumeBtn.onclick = () => this.resumeTodo(todo.id);
                 controls.appendChild(resumeBtn);
             } else if (!todo.running) {
                 const startBtn = document.createElement('button');
                 startBtn.className = 'start-btn';
                 startBtn.textContent = '시작';
-                startBtn.disabled = this.runningTodoId !== null;
+                startBtn.disabled = false;
                 startBtn.onclick = () => this.startTodo(todo.id);
                 controls.appendChild(startBtn);
             } else {
