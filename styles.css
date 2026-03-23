@@ -1675,11 +1675,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* Habit legend */
 .habit-legend {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
 }
 
 .habit-legend-item {
