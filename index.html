@@ -229,17 +229,26 @@
         <!-- Calendar View -->
         <div id="calendarView" class="view-container" style="display: none;">
             <div id="motivationQuote" class="motivation-quote"></div>
-            <div id="streakSummary"></div>
-            <div class="cal-toolbar">
-                <div class="cal-nav">
-                    <button id="calPrevMonth" class="nav-btn">&#9664;</button>
-                    <span id="calMonthLabel" class="cal-month-label"></span>
-                    <button id="calNextMonth" class="nav-btn">&#9654;</button>
+            <div class="calendar-layout">
+                <aside class="streak-sidebar">
+                    <div class="streak-sidebar-header">
+                        <div class="streak-sidebar-title">스트릭 현황</div>
+                        <button id="addHabitBtn" class="add-habit-btn">+ 습관 추가</button>
+                    </div>
+                    <div id="streakSummary"></div>
+                    <div class="habit-legend" id="habitLegend"></div>
+                </aside>
+                <div class="calendar-main">
+                    <div class="cal-toolbar">
+                        <div class="cal-nav">
+                            <button id="calPrevMonth" class="nav-btn">&#9664;</button>
+                            <span id="calMonthLabel" class="cal-month-label"></span>
+                            <button id="calNextMonth" class="nav-btn">&#9654;</button>
+                        </div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
                 </div>
-                <button id="addHabitBtn" class="add-habit-btn">+ 습관 추가</button>
             </div>
-            <div class="habit-legend" id="habitLegend"></div>
-            <div class="calendar-grid" id="calendarGrid"></div>
         </div>
 
     </div><!-- /.container -->

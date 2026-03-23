@@ -506,12 +506,15 @@ class TodoTracker {
             return { ...h, streak, totalDone, remaining, todayDone };
         }).sort((a, b) => b.streak - a.streak);
 
+        // 진행 중 카운트를 사이드바 헤더에 반영
+        const subEl = document.querySelector('.streak-sidebar-title');
+        if (subEl) {
+            const activeCount = items.filter(h => h.streak > 0).length;
+            subEl.dataset.sub = activeCount > 0 ? `${activeCount}개 진행 중` : '';
+        }
+
         el.innerHTML = `
             <div class="streak-dashboard">
-                <div class="streak-dashboard-header">
-                    <span class="streak-dashboard-title">스트릭 현황</span>
-                    <span class="streak-dashboard-sub">${items.filter(h => h.streak > 0).length}개 진행 중</span>
-                </div>
                 <div class="streak-cards-grid">
                     ${items.map(h => `
                         <div class="streak-card-v2 ${h.streak > 0 ? 'active' : 'inactive'}" style="--habit-color:${h.color}">
@@ -535,6 +538,8 @@ class TodoTracker {
             </div>
         `;
     }
+
+
 
     renderHabitLegend(habits) {
         const legend = document.getElementById('habitLegend');
