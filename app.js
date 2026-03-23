@@ -519,7 +519,9 @@ class TodoTracker {
                     ${items.map(h => `
                         <div class="streak-card-v2 ${h.streak > 0 ? 'active' : 'inactive'}" style="--habit-color:${h.color}">
                             <div class="streak-card-top">
-                                ${h.todayDone ? '<span class="streak-today-badge">오늘 완료</span>' : ''}
+                                ${h.todayDone
+                                    ? '<span class="streak-today-badge">오늘 완료</span>'
+                                    : '<span class="streak-burning-badge">타오르는 중</span>'}
                             </div>
                             <div class="streak-card-number ${h.streak > 0 ? '' : 'zero'}">
                                 ${h.streak > 0 ? h.stamp : '—'} ${h.streak}

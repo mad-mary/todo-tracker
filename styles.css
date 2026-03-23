@@ -1525,6 +1525,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     white-space: nowrap;
 }
 
+.streak-burning-badge {
+    font-size: 10px;
+    font-weight: 700;
+    color: #F59B23;
+    background: rgba(245, 155, 35, 0.15);
+    padding: 2px 6px;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+}
+
 .streak-card-number {
     font-size: 32px;
     font-weight: 800;
