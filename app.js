@@ -1367,12 +1367,20 @@ openStampModal(dateStr, habits) {
             const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
             const dateLabel = `${months[month - 1]} ${day}`;
             return `
-                <div class="backlog-item">
+                <div class="backlog-item" data-date="${item.date}" style="cursor:pointer;">
                     <div class="backlog-item-date">${dateLabel}</div>
                     <div class="backlog-item-text">${item.text}</div>
                 </div>
             `;
         }).join('');
+
+        this.backlogList.querySelectorAll('.backlog-item').forEach(el => {
+            el.addEventListener('click', () => {
+                this.currentDate = el.dataset.date;
+                this.setDateInput();
+                this.render();
+            });
+        });
     }
 
     renderTodoItem(todo) {
