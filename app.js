@@ -184,7 +184,7 @@ class TodoTracker {
         this.syncStatusRow = document.getElementById('syncStatusRow');
         this.syncStatusText = document.getElementById('syncStatusText');
         this.addTodoSection = document.querySelector('.add-todo-section');
-        this.streakSummaryEl = null;
+        this.streakSummaryEl = document.getElementById('streakSummary');
     }
 
     initEventListeners() {
@@ -448,13 +448,8 @@ class TodoTracker {
         if (!this.streakSummaryEl) {
             this.streakSummaryEl = document.getElementById('streakSummary');
         }
-        if (!this.streakSummaryEl) {
-            this.streakSummaryEl = document.createElement('div');
-            this.streakSummaryEl.id = 'streakSummary';
-            const grid = document.getElementById('calendarGrid');
-            grid.parentNode.insertBefore(this.streakSummaryEl, grid);
-        }
         const el = this.streakSummaryEl;
+        if (!el) return;
 
         if (!habits || habits.length === 0) {
             el.innerHTML = '';
