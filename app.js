@@ -13,7 +13,7 @@ class TodoTracker {
         this.gistToken = localStorage.getItem('gist_token') || '';
         this.gistId = localStorage.getItem('gist_id') || '';
         this.syncIntervalTimer = null;
-        this.SYNC_INTERVAL_MS = 3 * 60 * 60 * 1000; // 3시간
+        this.SYNC_INTERVAL_MS = 10 * 60 * 1000; // 10분
         this.tags = this.loadTags();
         this.selectedTagIds = [];
         this.editSelectedTagIds = [];
