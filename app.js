@@ -24,6 +24,7 @@ class TodoTracker {
         this.calendarMonth = new Date().getMonth();
         this.pendingHabitStamp = '📚';
         this.pendingHabitColor = '#1DB954';
+        this.pendingHabitDays = [];
         this.STAMPS = ['📚','✏️','🏃','💪','🎯','🍎','💧','🧘','📝','🎵','🌟','🔥','😊','🎨','🍵','🌙','☀️','🐣','🦋','⭐'];
 
         this.taskHistoryCache = null;
@@ -418,7 +419,11 @@ class TodoTracker {
             dayNum.textContent = day;
             cell.appendChild(dayNum);
 
-            const dayHabits = activeHabits.filter(h => h.startDate <= dateStr && h.endDate >= dateStr);
+            const dayOfWeek = new Date(year, month, day).getDay();
+            const dayHabits = activeHabits.filter(h =>
+                h.startDate <= dateStr && h.endDate >= dateStr &&
+                (!h.days || h.days.length === 0 || h.days.includes(dayOfWeek))
+            );
 
             if (dayHabits.length > 0) {
                 const stampsDiv = document.createElement('div');
@@ -579,10 +584,30 @@ class TodoTracker {
         this.habitEndDateInput.value = '';
         this.pendingHabitStamp = this.STAMPS[0];
         this.pendingHabitColor = this.TAG_COLORS[2]; // green
+        this.pendingHabitDays = [];
+        this.renderDaySelector();
         this.renderStampPicker();
         this.renderHabitColorSwatches();
         this.habitModal.classList.add('active');
         this.habitNameInput.focus();
+    }
+
+    renderDaySelector() {
+        const labels = ['일','월','화','수','목','금','토'];
+        const container = document.getElementById('daySelector');
+        container.style.setProperty('--habit-color', this.pendingHabitColor);
+        container.innerHTML = labels.map((d, i) => `
+            <button type="button" class="day-btn ${this.pendingHabitDays.includes(i) ? 'selected' : ''}" data-day="${i}">${d}</button>
+        `).join('');
+        container.querySelectorAll('.day-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const day = Number(btn.dataset.day);
+                const idx = this.pendingHabitDays.indexOf(day);
+                if (idx === -1) this.pendingHabitDays.push(day);
+                else this.pendingHabitDays.splice(idx, 1);
+                this.renderDaySelector();
+            });
+        });
     }
 
     renderStampPicker() {
@@ -611,7 +636,7 @@ class TodoTracker {
         this.renderColorSwatches(
             document.getElementById('habitColorSwatches'),
             this.pendingHabitColor,
-            (color) => { this.pendingHabitColor = color; this.renderHabitColorSwatches(); }
+            (color) => { this.pendingHabitColor = color; this.renderHabitColorSwatches(); this.renderDaySelector(); }
         );
     }
 
@@ -634,6 +659,7 @@ class TodoTracker {
             startDate: this.formatDate(new Date()),
             stamp: this.pendingHabitStamp,
             color: this.pendingHabitColor,
+            days: [...this.pendingHabitDays],
             stamps: {}
         });
         this.saveHabits();
@@ -739,16 +765,27 @@ class TodoTracker {
     // ── Feature 2: 스트릭 계산 ────────────────────────
 
     calcStreak(habit) {
+        const targetDays = habit.days && habit.days.length > 0 ? habit.days : null;
         let streak = 0;
         const today = new Date();
-        const todayStr = this.formatDate(today);
-        const startOffset = habit.stamps[todayStr] ? 0 : 1;
-        for (let i = startOffset; i < 366; i++) {
+
+        for (let i = 0; i < 366; i++) {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
+            const dayOfWeek = d.getDay();
             const dateStr = this.formatDate(d);
-            if (habit.stamps[dateStr]) streak++;
-            else break;
+
+            // Skip days not in target
+            if (targetDays && !targetDays.includes(dayOfWeek)) continue;
+
+            if (habit.stamps[dateStr]) {
+                streak++;
+            } else if (i === 0) {
+                // Today is a target day but not stamped yet — don't penalize
+                continue;
+            } else {
+                break;
+            }
         }
         return streak;
     }

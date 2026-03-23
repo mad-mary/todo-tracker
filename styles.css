@@ -1739,6 +1739,40 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     background: var(--green-dim);
 }
 
+/* Day selector */
+.day-selector {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.day-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--surface-alt);
+    color: var(--text-faint);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.day-btn:hover {
+    border-color: var(--text-faint);
+    color: var(--text);
+}
+
+.day-btn.selected {
+    background: var(--habit-color, #1DB954);
+    border-color: var(--habit-color, #1DB954);
+    color: #fff;
+}
+
 /* Stamp day modal */
 .stamp-modal-item {
     display: flex;
