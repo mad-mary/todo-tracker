@@ -40,6 +40,7 @@ class TodoTracker {
         this.startSyncInterval();
         window.addEventListener('beforeunload', () => this.syncToGist());
         this.renderAddTagSelector();
+        this.initDropZone();
     }
 
     requestNotificationPermission() {
@@ -603,6 +604,42 @@ openStampModal(dateStr, habits) {
         this.todoInput.value = '';
         this.selectedTagIds = [];
         this.renderAddTagSelector();
+        this.saveToLocalStorage();
+        this.render();
+    }
+
+    initDropZone() {
+        const zone = document.querySelector('.add-todo-section');
+        if (!zone) return;
+
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zone.classList.add('drop-over');
+        });
+        zone.addEventListener('dragleave', () => {
+            zone.classList.remove('drop-over');
+        });
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('drop-over');
+            try {
+                const { todoId, fromDate } = JSON.parse(e.dataTransfer.getData('text/plain'));
+                this.moveBacklogTodo(todoId, fromDate, this.currentDate);
+            } catch {}
+        });
+    }
+
+    moveBacklogTodo(todoId, fromDate, toDate) {
+        if (fromDate === toDate) return;
+        const fromList = this.todos[fromDate];
+        if (!fromList) return;
+        const idx = fromList.findIndex(t => t.id === todoId);
+        if (idx === -1) return;
+
+        const [todo] = fromList.splice(idx, 1);
+        if (!this.todos[toDate]) this.todos[toDate] = [];
+        this.todos[toDate].push(todo);
+
         this.saveToLocalStorage();
         this.render();
     }
@@ -1354,7 +1391,7 @@ openStampModal(dateStr, habits) {
         allDates.forEach(date => {
             (this.todos[date] || [])
                 .filter(t => !t.completed)
-                .forEach(t => backlogItems.push({ text: t.text, date }));
+                .forEach(t => backlogItems.push({ id: t.id, text: t.text, date }));
         });
 
         if (backlogItems.length === 0) {
@@ -1367,7 +1404,7 @@ openStampModal(dateStr, habits) {
             const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
             const dateLabel = `${months[month - 1]} ${day}`;
             return `
-                <div class="backlog-item" data-date="${item.date}" style="cursor:pointer;">
+                <div class="backlog-item" data-date="${item.date}" data-todo-id="${item.id}" draggable="true" style="cursor:pointer;">
                     <div class="backlog-item-date">${dateLabel}</div>
                     <div class="backlog-item-text">${item.text}</div>
                 </div>
@@ -1379,6 +1416,16 @@ openStampModal(dateStr, habits) {
                 this.currentDate = el.dataset.date;
                 this.setDateInput();
                 this.render();
+            });
+            el.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    todoId: Number(el.dataset.todoId),
+                    fromDate: el.dataset.date
+                }));
+                el.classList.add('dragging');
+            });
+            el.addEventListener('dragend', () => {
+                el.classList.remove('dragging');
             });
         });
     }
