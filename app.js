@@ -41,6 +41,7 @@ class TodoTracker {
         window.addEventListener('beforeunload', () => this.syncToGist());
         this.renderAddTagSelector();
         this.initDropZone();
+        this.initTaskHistoryAutocomplete();
     }
 
     requestNotificationPermission() {
@@ -170,6 +171,7 @@ class TodoTracker {
         this.closeTagManageBtn = document.getElementById('closeTagManageBtn');
         this.tagSelectorContainer = document.getElementById('tagSelectorContainer');
         this.editTagContainer = document.getElementById('editTagContainer');
+        this.editMemoInput = document.getElementById('editMemoInput');
         // Settings modal
         this.settingsModal = document.getElementById('settingsModal');
         this.settingsBtn = document.getElementById('settingsBtn');
@@ -432,6 +434,31 @@ class TodoTracker {
         }
 
         this.renderHabitLegend(activeHabits);
+        this.renderStreakSummary(activeHabits);
+    }
+
+    renderStreakSummary(habits) {
+        let el = document.getElementById('streakSummary');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'streakSummary';
+            el.className = 'streak-summary';
+            const grid = document.getElementById('calendarGrid');
+            grid.parentNode.insertBefore(el, grid);
+        }
+        const items = habits
+            .map(h => ({ name: h.name, stamp: h.stamp, color: h.color, streak: this.calcStreak(h) }))
+            .filter(h => h.streak > 0)
+            .sort((a, b) => b.streak - a.streak);
+
+        if (items.length === 0) { el.innerHTML = ''; return; }
+        el.innerHTML = items.map(h => `
+            <div class="streak-card" style="--habit-color:${h.color}">
+                <span class="streak-stamp">${h.stamp}</span>
+                <span class="streak-name">${h.name}</span>
+                <span class="streak-count">🔥 ${h.streak}일 연속</span>
+            </div>
+        `).join('');
     }
 
     renderHabitLegend(habits) {
@@ -446,10 +473,15 @@ class TodoTracker {
             const remaining = h.endDate >= today
                 ? Math.round((new Date(h.endDate) - new Date(today)) / 86400000) + 1
                 : 0;
+            const streak = this.calcStreak(h);
+            const streakBadge = streak > 0
+                ? `<span class="streak-badge">🔥 ${streak}일 연속</span>`
+                : '';
             return `
                 <div class="habit-legend-item" style="--habit-color: ${h.color}">
                     <span class="habit-legend-stamp">${h.stamp}</span>
                     <span class="habit-legend-name">${h.name}</span>
+                    ${streakBadge}
                     <span class="habit-legend-count">${stamped}일 완료 · D-${remaining}</span>
                     <button class="habit-delete-btn" data-habit-id="${h.id}" title="삭제">✕</button>
                 </div>
@@ -592,6 +624,7 @@ openStampModal(dateStr, habits) {
             id: Date.now(),
             text: text,
             tags: [...this.selectedTagIds],
+            memo: '',
             completed: false,
             startTime: null,
             elapsedTime: 0,
@@ -606,6 +639,115 @@ openStampModal(dateStr, habits) {
         this.renderAddTagSelector();
         this.saveToLocalStorage();
         this.render();
+    }
+
+    // ── Feature 1: 태스크 기록 자동완성 ─────────────
+
+    getTaskHistory(filter = '') {
+        const counts = {};
+        Object.values(this.todos).forEach(dayTodos => {
+            dayTodos.forEach(t => {
+                const key = t.text.trim();
+                if (key) counts[key] = (counts[key] || 0) + 1;
+            });
+        });
+        return Object.entries(counts)
+            .filter(([text]) => !filter || text.toLowerCase().includes(filter.toLowerCase()))
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 7)
+            .map(([text]) => text);
+    }
+
+    initTaskHistoryAutocomplete() {
+        const input = this.todoInput;
+        const dropdown = document.getElementById('taskHistoryDropdown');
+        if (!input || !dropdown) return;
+
+        const show = (items) => {
+            if (items.length === 0) { dropdown.style.display = 'none'; return; }
+            dropdown.innerHTML = items.map(text =>
+                `<div class="task-history-item">${text}</div>`
+            ).join('');
+            dropdown.style.display = 'block';
+            dropdown.querySelectorAll('.task-history-item').forEach(el => {
+                el.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    input.value = el.textContent;
+                    dropdown.style.display = 'none';
+                    input.focus();
+                });
+            });
+        };
+
+        input.addEventListener('input', () => {
+            const val = input.value.trim();
+            if (!val) { dropdown.style.display = 'none'; return; }
+            show(this.getTaskHistory(val));
+        });
+        input.addEventListener('focus', () => {
+            const val = input.value.trim();
+            if (val) show(this.getTaskHistory(val));
+        });
+        input.addEventListener('blur', () => {
+            setTimeout(() => { dropdown.style.display = 'none'; }, 150);
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') dropdown.style.display = 'none';
+        });
+    }
+
+    // ── Feature 2: 스트릭 계산 ────────────────────────
+
+    calcStreak(habit) {
+        let streak = 0;
+        const today = new Date();
+        const todayStr = this.formatDate(today);
+        const startOffset = habit.stamps[todayStr] ? 0 : 1;
+        for (let i = startOffset; i < 366; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const dateStr = this.formatDate(d);
+            if (habit.stamps[dateStr]) streak++;
+            else break;
+        }
+        return streak;
+    }
+
+    // ── Feature 3: 태스크 메모 렌더 ──────────────────
+
+    renderTodoMemo(todo) {
+        const section = document.createElement('div');
+        section.className = 'todo-memo-section';
+
+        const toggle = document.createElement('button');
+        toggle.className = `memo-toggle-btn${todo.memo ? ' has-memo' : ''}`;
+        toggle.textContent = todo.memo ? '📝 메모' : '+ 메모';
+
+        const area = document.createElement('div');
+        area.className = 'memo-area';
+        area.style.display = todo.memo ? 'block' : 'none';
+
+        const textarea = document.createElement('textarea');
+        textarea.className = 'memo-textarea';
+        textarea.placeholder = '메모를 입력하세요...';
+        textarea.value = todo.memo || '';
+        textarea.addEventListener('input', () => {
+            todo.memo = textarea.value;
+            this.saveToLocalStorage();
+            toggle.textContent = todo.memo ? '📝 메모' : '+ 메모';
+            toggle.classList.toggle('has-memo', !!todo.memo);
+        });
+
+        toggle.addEventListener('click', () => {
+            const visible = area.style.display !== 'none';
+            area.style.display = visible ? 'none' : 'block';
+            if (!visible) textarea.focus();
+        });
+
+        area.appendChild(textarea);
+        section.appendChild(toggle);
+        section.appendChild(area);
+        return section;
     }
 
     initDropZone() {
@@ -871,6 +1013,7 @@ openStampModal(dateStr, habits) {
         this.editTaskInput.value = todo.text;
         this.editTaskDate.value = this.currentDate;
         this.editSelectedTagIds = [...(todo.tags || [])];
+        this.editMemoInput.value = todo.memo || '';
         this.renderEditTagSelector();
         this.editModal.classList.add('active');
         this.editTaskInput.focus();
@@ -891,6 +1034,7 @@ openStampModal(dateStr, habits) {
         const todo = todos[todoIndex];
         todo.text = newText;
         todo.tags = [...this.editSelectedTagIds];
+        todo.memo = this.editMemoInput.value.trim();
 
         if (newDate && newDate !== this.currentDate) {
             if (this.runningTodoId === todo.id) {
@@ -1541,6 +1685,8 @@ openStampModal(dateStr, habits) {
         if (todo.holdHistory && todo.holdHistory.length > 0) {
             div.appendChild(this.renderHoldHistory(todo));
         }
+
+        div.appendChild(this.renderTodoMemo(todo));
 
         return div;
     }

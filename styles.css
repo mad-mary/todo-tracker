@@ -1320,6 +1320,136 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* ============================================
+   Task History Autocomplete
+   ============================================ */
+
+.task-history-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 72px;
+    background: var(--surface-alt);
+    border: 1px solid var(--surface-hover);
+    border-radius: var(--radius);
+    z-index: 100;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.task-history-item {
+    padding: 10px 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background 0.1s, color 0.1s;
+}
+
+.task-history-item:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+}
+
+/* ============================================
+   Task Memo
+   ============================================ */
+
+.todo-memo-section {
+    margin-top: 8px;
+}
+
+.memo-toggle-btn {
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: var(--text-faint);
+    cursor: pointer;
+    padding: 2px 0;
+    font-family: inherit;
+    transition: color 0.15s;
+}
+
+.memo-toggle-btn:hover,
+.memo-toggle-btn.has-memo {
+    color: var(--text-muted);
+}
+
+.memo-area {
+    margin-top: 6px;
+}
+
+.memo-textarea {
+    width: 100%;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 8px 10px;
+    outline: none;
+    resize: vertical;
+    min-height: 60px;
+    transition: border-color 0.15s;
+}
+
+.memo-textarea:focus {
+    border-color: var(--text-faint);
+}
+
+/* ============================================
+   Streak
+   ============================================ */
+
+.streak-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--orange);
+    background: var(--orange-dim);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+}
+
+.streak-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.streak-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--habit-color, var(--border));
+    border-radius: var(--radius);
+    padding: 10px 14px;
+}
+
+.streak-stamp {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.streak-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--habit-color, var(--text));
+}
+
+.streak-count {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--orange);
+}
+
+/* ============================================
    Calendar View
    ============================================ */
 
