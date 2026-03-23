@@ -442,23 +442,53 @@ class TodoTracker {
         if (!el) {
             el = document.createElement('div');
             el.id = 'streakSummary';
-            el.className = 'streak-summary';
             const grid = document.getElementById('calendarGrid');
             grid.parentNode.insertBefore(el, grid);
         }
-        const items = habits
-            .map(h => ({ name: h.name, stamp: h.stamp, color: h.color, streak: this.calcStreak(h) }))
-            .filter(h => h.streak > 0)
-            .sort((a, b) => b.streak - a.streak);
 
-        if (items.length === 0) { el.innerHTML = ''; return; }
-        el.innerHTML = items.map(h => `
-            <div class="streak-card" style="--habit-color:${h.color}">
-                <span class="streak-stamp">${h.stamp}</span>
-                <span class="streak-name">${h.name}</span>
-                <span class="streak-count">🔥 ${h.streak}일 연속</span>
+        if (!habits || habits.length === 0) {
+            el.innerHTML = '';
+            return;
+        }
+
+        const today = this.formatDate(new Date());
+        const items = habits.map(h => {
+            const streak = this.calcStreak(h);
+            const totalDone = Object.keys(h.stamps || {}).length;
+            const remaining = h.endDate >= today
+                ? Math.round((new Date(h.endDate) - new Date(today)) / 86400000) + 1
+                : 0;
+            const todayDone = !!h.stamps[today];
+            return { ...h, streak, totalDone, remaining, todayDone };
+        }).sort((a, b) => b.streak - a.streak);
+
+        el.innerHTML = `
+            <div class="streak-dashboard">
+                <div class="streak-dashboard-header">
+                    <span class="streak-dashboard-title">스트릭 현황</span>
+                    <span class="streak-dashboard-sub">${items.filter(h => h.streak > 0).length}개 진행 중</span>
+                </div>
+                <div class="streak-cards-grid">
+                    ${items.map(h => `
+                        <div class="streak-card-v2 ${h.streak > 0 ? 'active' : 'inactive'}" style="--habit-color:${h.color}">
+                            <div class="streak-card-top">
+                                <span class="streak-card-stamp">${h.stamp}</span>
+                                ${h.todayDone ? '<span class="streak-today-badge">오늘 완료</span>' : ''}
+                            </div>
+                            <div class="streak-card-number ${h.streak > 0 ? '' : 'zero'}">
+                                ${h.streak > 0 ? '🔥' : '—'} ${h.streak}
+                            </div>
+                            <div class="streak-card-label">일 연속</div>
+                            <div class="streak-card-name">${h.name}</div>
+                            <div class="streak-card-meta">
+                                <span>${h.totalDone}일 완료</span>
+                                <span>D-${h.remaining}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
-        `).join('');
+        `;
     }
 
     renderHabitLegend(habits) {

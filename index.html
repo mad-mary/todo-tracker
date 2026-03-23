@@ -225,9 +225,23 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Tag Manage Modal -->
+        <!-- Calendar View -->
+        <div id="calendarView" class="view-container" style="display: none;">
+            <div class="cal-toolbar">
+                <div class="cal-nav">
+                    <button id="calPrevMonth" class="nav-btn">&#9664;</button>
+                    <span id="calMonthLabel" class="cal-month-label"></span>
+                    <button id="calNextMonth" class="nav-btn">&#9654;</button>
+                </div>
+                <button id="addHabitBtn" class="add-habit-btn">+ 습관 추가</button>
+            </div>
+            <div class="habit-legend" id="habitLegend"></div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+    </div><!-- /.container -->
+
     <div id="tagManageModal" class="modal">
         <div class="modal-content">
             <h2>태그 관리</h2>
@@ -241,20 +255,6 @@
                 <button id="closeTagManageBtn" class="cancel-btn">닫기</button>
             </div>
         </div>
-    </div>
-
-    <!-- Calendar View -->
-    <div id="calendarView" class="view-container" style="display: none;">
-        <div class="cal-toolbar">
-            <div class="cal-nav">
-                <button id="calPrevMonth" class="nav-btn">&#9664;</button>
-                <span id="calMonthLabel" class="cal-month-label"></span>
-                <button id="calNextMonth" class="nav-btn">&#9654;</button>
-            </div>
-            <button id="addHabitBtn" class="add-habit-btn">+ 습관 추가</button>
-        </div>
-        <div class="habit-legend" id="habitLegend"></div>
-        <div class="calendar-grid" id="calendarGrid"></div>
     </div>
 
     <!-- Habit Add Modal -->
