@@ -63,7 +63,10 @@ class TodoTracker {
             this.syncFromGist();
         }
         this.startSyncInterval();
-        window.addEventListener('beforeunload', () => this.syncToGist());
+        window.addEventListener('beforeunload', () => this.syncToGistKeepAlive());
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') this.syncToGistKeepAlive();
+        });
         this.initDropZone();
         this.initTaskHistoryAutocomplete();
     }
@@ -194,6 +197,7 @@ class TodoTracker {
         this.editTagContainer = document.getElementById('editTagContainer');
         this.editMemoInput = document.getElementById('editMemoInput');
         // Settings modal
+        this.manualSyncBtn = document.getElementById('manualSyncBtn');
         this.settingsModal = document.getElementById('settingsModal');
         this.settingsBtn = document.getElementById('settingsBtn');
         this.syncDot = document.getElementById('syncDot');
@@ -287,6 +291,7 @@ class TodoTracker {
         this.tagNameInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.addTag();
         });
+        this.manualSyncBtn.addEventListener('click', () => this.syncFromGist());
         this.settingsBtn.addEventListener('click', () => this.openSettingsModal());
         this.confirmSettingsBtn.addEventListener('click', () => this.saveGistSettings());
         this.disconnectGistBtn.addEventListener('click', () => this.disconnectGist());
@@ -1299,6 +1304,26 @@ class TodoTracker {
         } catch (err) {
             this.updateSyncDot('error');
         }
+    }
+
+    // 페이지 닫힘/백그라운드 전환 시 keepalive fetch로 데이터 손실 방지
+    syncToGistKeepAlive() {
+        if (!this.gistToken || !this.gistId) return;
+        const content = JSON.stringify({ todos: this.todos, tags: this.tags, habits: this.habits }, null, 2);
+        try {
+            fetch(`https://api.github.com/gists/${this.gistId}`, {
+                method: 'PATCH',
+                keepalive: true,
+                headers: {
+                    'Authorization': `Bearer ${this.gistToken}`,
+                    'Accept': 'application/vnd.github+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    files: { 'todo-tracker.json': { content } }
+                })
+            });
+        } catch {}
     }
 
     resumeTodo(id) {
