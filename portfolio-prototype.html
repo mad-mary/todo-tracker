@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mad Mode — 포트폴리오 프로토타입</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #121212;
+            --surface: #181818;
+            --surface-alt: #282828;
+            --surface-hover: #333333;
+            --green: #1DB954;
+            --green-dim: rgba(29,185,84,0.15);
+            --orange: #F59B23;
+            --orange-dim: rgba(245,155,35,0.15);
+            --text: #FFFFFF;
+            --text-muted: #B3B3B3;
+            --text-faint: #6A6A6A;
+            --border: #282828;
+            --radius: 8px;
+            --radius-sm: 4px;
+            --radius-pill: 500px;
+
+            /* PO 카테고리 컬러 */
+            --cat-discovery: #45B7D1;
+            --cat-delivery:  #1DB954;
+            --cat-planning:  #BB8FCE;
+            --cat-stakeholder: #F59B23;
+            --cat-operations: #F8A5C2;
+            --cat-learning:  #78E8C0;
+            --cat-other:     #6A6A6A;
+        }
+
+        html, body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 24px 24px 64px;
+        }
+
+        /* ── Header ── */
+        header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+        header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+
+        .tab-switcher {
+            display: flex;
+            background: var(--surface-alt);
+            border-radius: var(--radius-pill);
+            padding: 3px;
+            gap: 2px;
+        }
+        .tab-btn {
+            padding: 6px 18px;
+            border: none;
+            border-radius: var(--radius-pill);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            transition: background 0.15s, color 0.15s;
+        }
+        .tab-btn.active { background: var(--text); color: #000; }
+
+        /* ── Period Bar ── */
+        .period-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .period-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-btn {
+            width: 32px; height: 32px;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 12px;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-btn:hover { background: var(--surface-alt); color: var(--text); }
+        .period-label {
+            font-size: 15px;
+            font-weight: 700;
+            min-width: 180px;
+            text-align: center;
+        }
+        .period-toggle {
+            display: flex;
+            background: var(--surface-alt);
+            border-radius: var(--radius-pill);
+            padding: 3px;
+            gap: 2px;
+        }
+        .toggle-btn {
+            padding: 5px 16px;
+            border: none;
+            border-radius: var(--radius-pill);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            transition: background 0.15s, color 0.15s;
+        }
+        .toggle-btn.active { background: var(--green); color: #000; }
+
+        /* ── Section Title ── */
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.9px;
+            text-transform: uppercase;
+            color: var(--text-faint);
+            margin-bottom: 14px;
+        }
+
+        /* ── PO Summary Card ── */
+        .po-summary-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        .po-summary-headline {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1.3;
+            margin-bottom: 6px;
+        }
+        .po-summary-headline span { color: var(--green); }
+        .po-summary-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        /* ── Charts Row ── */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 24px;
+            align-items: center;
+        }
+        .donut-wrap {
+            position: relative;
+            width: 220px;
+            height: 220px;
+        }
+        .donut-center {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+        }
+        .donut-center-value {
+            font-size: 26px;
+            font-weight: 800;
+            line-height: 1;
+        }
+        .donut-center-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .bar-chart-wrap { width: 100%; }
+
+        /* ── Category Legend ── */
+        .cat-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .cat-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: var(--radius-pill);
+            background: var(--surface-alt);
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+        /* ── Insight Row ── */
+        .insight-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .insight-card {
+            background: var(--surface);
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .insight-card-label {
+            font-size: 11px;
+            color: var(--text-faint);
+            margin-bottom: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+        .insight-card-value {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+        .insight-card-delta {
+            font-size: 11px;
+            margin-top: 3px;
+        }
+        .delta-up { color: var(--green); }
+        .delta-down { color: #FF6B6B; }
+        .delta-neutral { color: var(--text-muted); }
+
+        /* ── Filter Toggle ── */
+        .filter-toggle {
+            display: flex;
+            background: var(--surface-alt);
+            border-radius: var(--radius-pill);
+            padding: 3px;
+            gap: 2px;
+        }
+        .filter-btn {
+            padding: 4px 14px;
+            border: none;
+            border-radius: var(--radius-pill);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            transition: background 0.15s, color 0.15s;
+        }
+        .filter-btn.active { background: var(--text); color: #000; }
+
+        /* ── Task status badges ── */
+        .task-date {
+            font-size: 11px;
+            color: var(--text-faint);
+            white-space: nowrap;
+        }
+        .task-reason {
+            font-size: 11px;
+            color: #FF6B6B;
+            background: rgba(255,107,107,0.1);
+            padding: 2px 8px;
+            border-radius: var(--radius-pill);
+            white-space: nowrap;
+        }
+
+        /* ── Task List Section ── */
+        .task-list-section {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 16px;
+        }
+        .task-list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .task-group { margin-bottom: 20px; }
+        .task-group:last-child { margin-bottom: 0; }
+        .task-group-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .task-group-name {
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .task-group-time {
+            font-size: 11px;
+            color: var(--text-faint);
+            margin-left: auto;
+        }
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 13px;
+        }
+        .task-item:last-child { border-bottom: none; }
+        .task-status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .dot-done { background: #3D3D3D; }
+        .dot-hold { background: #C0392B; box-shadow: 0 0 4px rgba(192,57,43,0.45); }
+        .task-name { flex: 1; }
+        .task-name.done { color: var(--text-muted); text-decoration: line-through; }
+
+        /* ── Category Badge (editable) ── */
+        .cat-badge-wrap { position: relative; }
+        .cat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 9px;
+            border-radius: var(--radius-pill);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+            transition: opacity 0.15s;
+            user-select: none;
+        }
+        .cat-badge:hover { opacity: 0.8; }
+        .cat-badge-arrow { font-size: 8px; opacity: 0.7; }
+
+        .cat-discovery  { background: rgba(69,183,209,0.18);  color: var(--cat-discovery); }
+        .cat-delivery   { background: rgba(29,185,84,0.18);   color: var(--cat-delivery); }
+        .cat-planning   { background: rgba(187,143,206,0.18); color: var(--cat-planning); }
+        .cat-stakeholder{ background: rgba(245,155,35,0.18);  color: var(--cat-stakeholder); }
+        .cat-operations { background: rgba(248,165,194,0.18); color: var(--cat-operations); }
+        .cat-learning   { background: rgba(120,232,192,0.18); color: var(--cat-learning); }
+        .cat-other      { background: rgba(106,106,106,0.18); color: var(--cat-other); }
+
+        /* Category dropdown */
+        .cat-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            border-radius: var(--radius);
+            padding: 4px;
+            z-index: 100;
+            min-width: 140px;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .cat-dropdown.open { display: block; }
+        .cat-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .cat-dropdown-item:hover { background: var(--surface-hover); }
+
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            .charts-row { grid-template-columns: 1fr; }
+            .donut-wrap { margin: 0 auto; }
+            .insight-row { grid-template-columns: repeat(2, 1fr); }
+            .legacy-stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <header>
+        <h1>Mad Mode</h1>
+        <div class="tab-switcher">
+            <button class="tab-btn">일별</button>
+            <button class="tab-btn active">주별</button>
+            <button class="tab-btn">캘린더</button>
+        </div>
+    </header>
+
+    <!-- Period Bar -->
+    <div class="period-bar">
+        <div class="period-nav">
+            <button class="nav-btn">&#9664;</button>
+            <span class="period-label">3월 31일 — 4월 6일</span>
+            <button class="nav-btn">&#9654;</button>
+            <button class="today-btn" style="padding:5px 14px;border:1px solid var(--border);border-radius:var(--radius-pill);background:transparent;color:var(--text-muted);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;">이번 주</button>
+        </div>
+        <div class="period-toggle">
+            <button class="toggle-btn active" id="toggleWeek" onclick="switchPeriod('week')">이번 주</button>
+            <button class="toggle-btn" id="toggleAll" onclick="switchPeriod('all')">전체 누적</button>
+        </div>
+    </div>
+
+    <!-- ① PO Summary Card -->
+    <div class="po-summary-card">
+        <p class="section-title">이번 주 나는 어떤 PO였나</p>
+        <div class="po-summary-headline" id="summaryHeadline">
+            <span>실행 중심</span>의 한 주.<br>기획 산출물에 72% 집중했습니다.
+        </div>
+        <p class="po-summary-sub" id="summarySub">
+            Discovery와 Stakeholder 비중이 누적 평균 대비 낮은 주였습니다. 다음 주엔 사용자 리서치와 공유 활동이 필요할 수 있습니다.
+        </p>
+
+        <div class="charts-row">
+            <!-- Donut -->
+            <div class="donut-wrap">
+                <canvas id="donutChart"></canvas>
+                <div class="donut-center">
+                    <div class="donut-center-value" id="donutCenterValue">72%</div>
+                    <div class="donut-center-label" id="donutCenterLabel">Delivery</div>
+                </div>
+            </div>
+            <!-- Bar comparison -->
+            <div class="bar-chart-wrap">
+                <canvas id="barChart" style="max-height:200px;"></canvas>
+            </div>
+        </div>
+
+        <!-- Category legend -->
+        <div class="cat-legend" id="catLegend"></div>
+    </div>
+
+    <!-- ② Insight Cards -->
+    <div class="insight-row" id="insightRow">
+        <!-- JS로 채움 -->
+    </div>
+
+    <!-- ③ 통합 태스크 목록 -->
+    <div class="task-list-section">
+        <div class="task-list-header">
+            <span class="section-title" style="margin:0;">이번 주 태스크</span>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span id="missedCountLabel" style="font-size:12px;color:#FF6B6B;font-weight:600;background:rgba(255,107,107,0.12);padding:3px 10px;border-radius:500px;"></span>
+                <div class="filter-toggle">
+                    <button class="filter-btn active" id="filterAll" onclick="setFilter('all')">전체</button>
+                    <button class="filter-btn" id="filterMissed" onclick="setFilter('missed')">미완료만</button>
+                </div>
+            </div>
+        </div>
+        <div id="taskListGroups"></div>
+    </div>
+
+
+</div>
+
+<script>
+/* ── 더미 데이터 ── */
+const CATEGORIES = [
+    { id: 'delivery',     label: 'Delivery',     emoji: '⚙️',  color: '#1DB954',  dimColor: 'rgba(29,185,84,0.18)' },
+    { id: 'stakeholder',  label: 'Stakeholder',  emoji: '💬',  color: '#F59B23',  dimColor: 'rgba(245,155,35,0.18)' },
+    { id: 'planning',     label: 'Planning',     emoji: '🗺️',  color: '#BB8FCE',  dimColor: 'rgba(187,143,206,0.18)' },
+    { id: 'discovery',    label: 'Discovery',    emoji: '🔍',  color: '#45B7D1',  dimColor: 'rgba(69,183,209,0.18)' },
+    { id: 'operations',   label: 'Operations',   emoji: '⚡',  color: '#F8A5C2',  dimColor: 'rgba(248,165,194,0.18)' },
+    { id: 'learning',     label: 'Learning',     emoji: '📚',  color: '#78E8C0',  dimColor: 'rgba(120,232,192,0.18)' },
+];
+
+const WEEK_DATA = {
+    delivery: 72, stakeholder: 8, planning: 10,
+    discovery: 4, operations: 4, learning: 2
+};
+const ALL_DATA = {
+    delivery: 45, stakeholder: 18, planning: 16,
+    discovery: 10, operations: 7, learning: 4
+};
+
+/* ── 자동 분류 함수 ── */
+function autoClassify(name) {
+    const n = name.toLowerCase();
+
+    // 1단계: 대괄호 prefix 매핑
+    const prefixMap = {
+        // Stakeholder — 소통·공유·요청 성격의 prefix
+        '요청':       'stakeholder',
+        '작업공유':   'stakeholder',
+        '회의':       'stakeholder',
+        '미팅':       'stakeholder',
+        '싱크':       'stakeholder',
+        '공유':       'stakeholder',
+        '보고':       'stakeholder',
+        '리마인드':   'stakeholder',
+        // Discovery — 탐색·분석 성격의 prefix
+        '리서치':     'discovery',
+        '분석':       'discovery',
+        // Delivery — 실행·산출 성격의 prefix
+        '기획':       'delivery',
+        '검토':       'delivery',
+        // Operations — 운영·배포 성격의 prefix
+        '운영':       'operations',
+        '대응':       'operations',
+        '배포':       'operations',
+    };
+    const prefixMatch = name.match(/^\[(.+?)\]/);
+    if (prefixMatch) {
+        const key = prefixMatch[1];
+        if (prefixMap[key]) return prefixMap[key];
+        // [작업] 또는 미등록 prefix면 2단계로 진행
+    }
+
+    // 2단계: 동작 키워드 매핑 (우선순위 순)
+    // ※ Stakeholder를 먼저 검사 — "공유"가 포함된 작업은 소통 목적으로 분류
+    const keywordMap = [
+        { cat: 'stakeholder', words: [
+            '공유', '싱크', '협의', '발표', '보고', '회의', '미팅',
+            '리마인드', '노출 순서 확인', '커뮤니케이션',
+        ]},
+        // Discovery — 단순 "분석" 단어보다 "분석요청 문서" 같은 경우는
+        //             뒤에 오는 '문서', '작성' 키워드가 Delivery 로 잡아줌
+        { cat: 'discovery',   words: [
+            '보고서', '로그 분석', '데이터 분석', '지표', '수치',
+            '리서치', '인터뷰', '탐색', '설문', '전환율', '경쟁사', 'abt',
+        ]},
+        { cat: 'planning',    words: [
+            '로드맵', '우선순위', '계획', 'okr', '분기', '전략', '백로그',
+        ]},
+        { cat: 'operations',  words: [
+            '이슈', '대응', '운영', 'cs', '처리', '모니터링', '트래킹',
+            '배포', '노출', '릴리즈',
+        ]},
+        { cat: 'learning',    words: [
+            '스터디', '교육', '세미나', '학습', '회고', '강의',
+        ]},
+        // Delivery — 문서·스펙·검토 등 실행 산출물 키워드 (후순위)
+        { cat: 'delivery',    words: [
+            '작성', '확인', '스펙', 'prd', 'ubl', '기획서', '초안', '최종본',
+            '로직', '검수', '피드백', '문서', 'qa', '와이어', '정리', '수정',
+            '검토', '보완', '작업', '정책 수립', '정의',
+        ]},
+    ];
+    for (const { cat, words } of keywordMap) {
+        if (words.some(w => n.includes(w))) return cat;
+    }
+
+    return 'other';
+}
+
+const RAW_TASKS = [
+    { name: '[작업] UBL 수정사항 검토 및 보완',                                    done: true,  time: '1h 30m' },
+    { name: '[작업] ABT 분석요청 문서 작업',                                       done: true,  time: '1h 10m' },
+    { name: '[요청] 배포 일자 리마인드 및 진입점 노출 순서 확인',                   done: true,  time: '30m'    },
+    { name: '[작업공유] 커머스플랫폼, 커머스마케팅, CRM > 마일리지 정책 변경',      done: true,  time: '45m'    },
+    { name: '[작업공유] 별점 바텀싯 정책 공유',                                    done: true,  time: '20m'    },
+    { name: '[작업] DR 상품 로직 확인',                                            done: true,  time: '2h 10m' },
+    { name: '[작업] 리뷰피드 로그 1차 보고서 작성',                                 done: true,  time: '1h 45m' },
+    { name: '[요청] 한줄평 삭제 스펙 내용 공유',                                   done: true,  time: '40m'    },
+    { name: '[작업] 리뷰 요약문구 최종본 확인',                                     done: true,  time: '1h 20m' },
+    { name: '[작업] 홈 탭 기획서 v2 작성',                                         done: true,  time: '3h 05m' },
+    { name: '[작업] QA 시트 정리',                                                 done: true,  time: '55m'    },
+    { name: '[싱크] 개발팀 스프린트 싱크',                                          done: true,  time: '1h 00m' },
+    { name: '[작업] 분기 로드맵 우선순위 재정렬',                                   done: true,  time: '1h 30m' },
+    { name: '[작업] CS 이슈 트래킹 정리',                                           done: true,  time: '30m'    },
+    { name: '[작업] 경쟁사 앱 분석',                                               done: false, time: '—',     holdReason: '정의 안됨' },
+    { name: '[요청] 팀 위클리 준비 자료 정리',                                      done: false, time: '—',     holdReason: '외부 요청' },
+];
+const TASKS = RAW_TASKS.map(t => ({ ...t, cat: autoClassify(t.name) }));
+
+const RAW_MISSED = [
+    { name: '[작업] 경쟁사 앱 분석',                reason: '정의 안됨' },
+    { name: '[작업] 전환율 드롭 데이터 분석',        reason: '미착수'   },
+    { name: '[작업] 사용자 인터뷰 스크립트 작성',    reason: '미착수'   },
+    { name: '[요청] 팀 위클리 준비 자료 정리',        reason: '외부 요청'},
+    { name: '[작업] 사내 Product Review 발표 초안',  reason: '미착수'   },
+    { name: '[작업] 커리어 회고 스터디 참여',         reason: '미착수'   },
+];
+const MISSED_TASKS = RAW_MISSED.map(t => ({ ...t, cat: autoClassify(t.name) }));
+
+/* ── 유틸 ── */
+function getCat(id) { return CATEGORIES.find(c => c.id === id) || { id:'other', label:'기타', color:'#6A6A6A', dimColor:'rgba(106,106,106,0.18)' }; }
+function catBadgeHTML(catId, taskIndex) {
+    const c = getCat(catId);
+    return `<div class="cat-badge-wrap">
+        <button class="cat-badge cat-${c.id}" onclick="toggleDropdown(${taskIndex})" id="badge-${taskIndex}">
+            ${c.label} <span class="cat-badge-arrow">▾</span>
+        </button>
+        <div class="cat-dropdown" id="dropdown-${taskIndex}">
+            ${CATEGORIES.map(cat => `
+                <div class="cat-dropdown-item" onclick="changeCategory(${taskIndex}, '${cat.id}')">
+                    <span style="width:8px;height:8px;border-radius:50%;background:${cat.color};display:inline-block;flex-shrink:0;"></span>
+                    ${cat.label}
+                </div>`).join('')}
+        </div>
+    </div>`;
+}
+
+let currentPeriod = 'week';
+let taskCats = TASKS.map(t => t.cat);
+
+function toggleDropdown(idx) {
+    document.querySelectorAll('.cat-dropdown').forEach((d, i) => {
+        if (i !== idx) d.classList.remove('open');
+    });
+    document.getElementById(`dropdown-${idx}`).classList.toggle('open');
+}
+document.addEventListener('click', e => {
+    if (!e.target.closest('.cat-badge-wrap')) {
+        document.querySelectorAll('.cat-dropdown').forEach(d => d.classList.remove('open'));
+    }
+});
+function changeCategory(taskIdx, newCatId) {
+    taskCats[taskIdx] = newCatId;
+    document.getElementById(`dropdown-${taskIdx}`).classList.remove('open');
+    const c = getCat(newCatId);
+    const badge = document.getElementById(`badge-${taskIdx}`);
+    badge.className = `cat-badge cat-${c.id}`;
+    badge.innerHTML = `${c.label} <span class="cat-badge-arrow">▾</span>`;
+}
+
+function switchPeriod(p) {
+    currentPeriod = p;
+    document.getElementById('toggleWeek').classList.toggle('active', p === 'week');
+    document.getElementById('toggleAll').classList.toggle('active', p === 'all');
+    renderCharts(p);
+    renderInsights(p);
+    updateSummary(p);
+}
+
+/* ── Category Legend ── */
+function renderLegend() {
+    const data = WEEK_DATA;
+    document.getElementById('catLegend').innerHTML = CATEGORIES.map(c =>
+        `<div class="cat-pill">
+            <span style="font-size:12px;line-height:1;">${c.emoji}</span>
+            ${c.label} <span style="color:var(--text-faint);font-weight:400;">${data[c.id]}%</span>
+        </div>`
+    ).join('');
+}
+
+/* ── Charts ── */
+let donutChart, barChart;
+function renderCharts(period) {
+    const data = period === 'week' ? WEEK_DATA : ALL_DATA;
+    const cats = CATEGORIES;
+    const values = cats.map(c => data[c.id]);
+    const colors = cats.map(c => c.color);
+    const bg = cats.map(c => c.dimColor.replace('0.18','0.85'));
+
+    // Donut
+    if (donutChart) donutChart.destroy();
+    donutChart = new Chart(document.getElementById('donutChart'), {
+        type: 'doughnut',
+        data: {
+            labels: cats.map(c => c.label),
+            datasets: [{ data: values, backgroundColor: bg, borderColor: '#121212', borderWidth: 3, hoverOffset: 6 }]
+        },
+        options: {
+            cutout: '68%',
+            plugins: { legend: { display: false }, tooltip: {
+                callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` },
+                backgroundColor: '#2a2a2a', titleColor: '#fff', bodyColor: '#B3B3B3',
+                padding: 10, cornerRadius: 8
+            }},
+            animation: { duration: 400 }
+        }
+    });
+    // Top category for center label
+    const maxCat = cats.reduce((m, c) => data[c.id] > data[m.id] ? c : m, cats[0]);
+    document.getElementById('donutCenterValue').textContent = `${data[maxCat.id]}%`;
+    document.getElementById('donutCenterLabel').textContent = maxCat.label;
+    document.getElementById('donutCenterValue').style.color = maxCat.color;
+
+    // Bar comparison
+    if (barChart) barChart.destroy();
+    const weekVals = cats.map(c => WEEK_DATA[c.id]);
+    const allVals  = cats.map(c => ALL_DATA[c.id]);
+    barChart = new Chart(document.getElementById('barChart'), {
+        type: 'bar',
+        data: {
+            labels: cats.map(c => c.label),
+            datasets: [
+                { label: '이번 주', data: weekVals, backgroundColor: cats.map(c => c.dimColor.replace('0.18','0.85')), borderRadius: 4, borderSkipped: false },
+                { label: '전체 누적 평균', data: allVals, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 4, borderSkipped: false }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#6A6A6A', font: { size: 11 }, callback: v => v+'%' }, max: 80 },
+                y: { grid: { display: false }, ticks: { color: '#B3B3B3', font: { size: 12, weight: '600' } } }
+            },
+            plugins: {
+                legend: { labels: { color: '#B3B3B3', font: { size: 11 }, boxWidth: 10, padding: 16 } },
+                tooltip: {
+                    callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.x}%` },
+                    backgroundColor: '#2a2a2a', titleColor: '#fff', bodyColor: '#B3B3B3',
+                    padding: 10, cornerRadius: 8
+                }
+            },
+            animation: { duration: 400 }
+        }
+    });
+}
+
+/* ── Insights ── */
+function renderInsights(period) {
+    const d = period === 'week' ? WEEK_DATA : ALL_DATA;
+    const dominated = CATEGORIES.reduce((m, c) => d[c.id] > d[m.id] ? c : m, CATEGORIES[0]);
+    const neglected = CATEGORIES.reduce((m, c) => d[c.id] < d[m.id] ? c : m, CATEGORIES[0]);
+
+    const weekDelivery = WEEK_DATA.delivery;
+    const allDelivery  = ALL_DATA.delivery;
+    const delta = weekDelivery - allDelivery;
+    const deltaStr = (delta >= 0 ? '+' : '') + delta + '%';
+    const deltaClass = delta >= 0 ? 'delta-up' : 'delta-down';
+
+    document.getElementById('insightRow').innerHTML = `
+        <div class="insight-card">
+            <div class="insight-card-label">주요 업무</div>
+            <div class="insight-card-value" style="color:${dominated.color}">${dominated.label}</div>
+            <div class="insight-card-delta delta-neutral">${d[dominated.id]}% 집중</div>
+        </div>
+        <div class="insight-card">
+            <div class="insight-card-label">Delivery vs 평균</div>
+            <div class="insight-card-value">${weekDelivery}%</div>
+            <div class="insight-card-delta ${deltaClass}">누적 평균 대비 ${deltaStr}</div>
+        </div>
+        <div class="insight-card">
+            <div class="insight-card-label">가장 적은 업무</div>
+            <div class="insight-card-value" style="color:${neglected.color}">${neglected.label}</div>
+            <div class="insight-card-delta delta-down">${d[neglected.id]}% — 보강 필요</div>
+        </div>
+    `;
+}
+
+/* ── Summary text ── */
+function updateSummary(period) {
+    if (period === 'week') {
+        document.getElementById('summaryHeadline').innerHTML = '<span style="color:var(--green)">실행 중심</span>의 한 주.<br>기획 산출물에 72% 집중했습니다.';
+        document.getElementById('summarySub').textContent = 'Discovery와 Stakeholder 비중이 누적 평균 대비 낮은 주였습니다. 다음 주엔 사용자 리서치와 공유 활동이 필요할 수 있습니다.';
+    } else {
+        document.getElementById('summaryHeadline').innerHTML = '<span style="color:var(--cat-delivery)">Delivery</span>와 <span style="color:var(--cat-stakeholder)">Stakeholder</span> 중심 PO.<br>누적 기준 실행과 소통에 강합니다.';
+        document.getElementById('summarySub').textContent = '전체 기간 기준 Discovery 비중(10%)이 상대적으로 낮습니다. 탐색과 데이터 기반 의사결정 역량을 포트폴리오에서 강조하면 좋습니다.';
+    }
+}
+
+/* ── 통합 태스크 목록 (TASKS + MISSED_TASKS 병합) ── */
+// TASKS에 더미 완료일자 추가
+const DONE_DATES = ['4/1', '4/1', '4/2', '4/2', '4/2', '4/3', '4/3', '4/3', '4/4', null, '4/4', null, '4/4', '4/5', null, null];
+const ALL_TASKS = [
+    ...TASKS.map((t, i) => ({
+        ...t,
+        completedDate: t.done ? (DONE_DATES[i] || '4/5') : null,
+        reason: t.holdReason || null,
+        _idx: i,
+        _source: 'task',
+    })),
+    ...MISSED_TASKS.map((t, i) => ({
+        ...t,
+        done: false,
+        completedDate: null,
+        _idx: TASKS.length + i,
+        _source: 'missed',
+    })),
+];
+// 통합 taskCats 배열 (missed도 포함)
+let allTaskCats = ALL_TASKS.map(t => t.cat);
+
+let currentFilter = 'all';
+
+function setFilter(f) {
+    currentFilter = f;
+    document.getElementById('filterAll').classList.toggle('active', f === 'all');
+    document.getElementById('filterMissed').classList.toggle('active', f === 'missed');
+    renderTaskList();
+}
+
+/* ── Task List (통합, 카테고리별 그룹) ── */
+function renderTaskList() {
+    const visibleTasks = currentFilter === 'missed'
+        ? ALL_TASKS.filter((t, i) => !t.done)
+        : ALL_TASKS;
+
+    const missedCount = ALL_TASKS.filter(t => !t.done).length;
+    document.getElementById('missedCountLabel').textContent = `미완료 ${missedCount}건`;
+
+    const grouped = {};
+    visibleTasks.forEach((t, _) => {
+        const cid = allTaskCats[t._idx];
+        if (!grouped[cid]) grouped[cid] = [];
+        grouped[cid].push(t);
+    });
+
+    document.getElementById('taskListGroups').innerHTML = CATEGORIES
+        .filter(c => grouped[c.id])
+        .map(c => {
+            const tasks = grouped[c.id];
+            const doneCount   = tasks.filter(t => t.done).length;
+            const totalCount  = tasks.length;
+            return `<div class="task-group">
+                <div class="task-group-header">
+                    <span style="font-size:14px;line-height:1;">${c.emoji}</span>
+                    <span class="task-group-name" style="color:${c.color};">${c.label}</span>
+                    <span class="task-group-time" style="color:var(--text-faint);">${doneCount}/${totalCount} 완료</span>
+                </div>
+                ${tasks.map(t => {
+                    const cid = allTaskCats[t._idx];
+                    const rightEl = t.done
+                        ? `<span class="task-date">${t.completedDate} 완료</span>`
+                        : `<span class="task-reason">${t.reason || '미착수'}</span>`;
+                    return `<div class="task-item">
+                        <span class="task-status-dot ${t.done ? 'dot-done' : 'dot-hold'}"></span>
+                        <span class="task-name ${t.done ? 'done' : ''}">${t.name}</span>
+                        ${rightEl}
+                        ${catBadgeHTML(cid, t._idx)}
+                    </div>`;
+                }).join('')}
+            </div>`;
+        }).join('');
+}
+
+/* ── Init ── */
+renderLegend();
+renderCharts('week');
+renderInsights('week');
+renderTaskList();
+</script>
+</body>
+</html>

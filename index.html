@@ -150,6 +150,21 @@
 
                     <!-- Task List -->
                     <div class="todo-list" id="todoList"></div>
+
+                    <!-- Diary Section -->
+                    <details class="diary-section" id="diarySection" open>
+                        <summary class="diary-summary">
+                            <span class="diary-title">✏️ 오늘의 일기</span>
+                            <span class="diary-count" id="diaryCount"></span>
+                        </summary>
+                        <div class="diary-input-row">
+                            <textarea id="diaryInput" placeholder="오늘 하루를 기록하세요... (Cmd+Enter로 저장)" rows="3"></textarea>
+                            <button id="addDiaryBtn">기록</button>
+                        </div>
+                        <div class="diary-list" id="diaryList">
+                            <div class="diary-empty">아직 기록이 없습니다</div>
+                        </div>
+                    </details>
                 </div>
             </div>
         </div>

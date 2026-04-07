@@ -20,6 +20,7 @@ class TodoTracker {
         this.pendingTagColor = '#FF6B6B';
         this.TAG_COLORS = ['#FF6B6B', '#F59B23', '#1DB954', '#45B7D1', '#BB8FCE', '#F8A5C2', '#78E8C0', '#85C1E9'];
         this.habits = this.loadHabits();
+        this.diary = this.loadDiary();
         this.calendarYear = new Date().getFullYear();
         this.calendarMonth = new Date().getMonth();
         this.pendingHabitStamp = '📚';
@@ -57,6 +58,7 @@ class TodoTracker {
         this.requestNotificationPermission();
         this.restoreActiveState();
         this.render();
+        this.renderDiary();
         this.updateSyncDot();
 
         if (this.gistToken && this.gistId) {
@@ -210,6 +212,8 @@ class TodoTracker {
         this.syncStatusText = document.getElementById('syncStatusText');
         this.addTodoSection = document.querySelector('.add-todo-section');
         this.streakSummaryEl = document.getElementById('streakSummary');
+        this.diaryInput = document.getElementById('diaryInput');
+        this.addDiaryBtn = document.getElementById('addDiaryBtn');
     }
 
     initEventListeners() {
@@ -323,6 +327,21 @@ class TodoTracker {
                 if (onHoldTodo) this.finishTodo(onHoldTodo.id);
             });
         }
+
+        if (this.addDiaryBtn) {
+            this.addDiaryBtn.addEventListener('click', () => {
+                this.addDiaryEntry(this.diaryInput.value);
+                this.diaryInput.value = '';
+            });
+        }
+        if (this.diaryInput) {
+            this.diaryInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    this.addDiaryEntry(this.diaryInput.value);
+                    this.diaryInput.value = '';
+                }
+            });
+        }
     }
 
     switchView(view) {
@@ -399,6 +418,94 @@ class TodoTracker {
 
     saveHabits() {
         localStorage.setItem('todoTrackerHabits', JSON.stringify(this.habits));
+    }
+
+    loadDiary() {
+        const data = localStorage.getItem('todoTrackerDiary');
+        return data ? JSON.parse(data) : {};
+    }
+
+    saveDiary() {
+        localStorage.setItem('todoTrackerDiary', JSON.stringify(this.diary));
+    }
+
+    getCurrentDateDiary() {
+        return this.diary[this.currentDate] || [];
+    }
+
+    addDiaryEntry(text, source = 'manual') {
+        if (!text.trim()) return;
+        const entry = {
+            id: Date.now(),
+            text: text.trim(),
+            time: new Date().toTimeString().slice(0, 5),
+            source
+        };
+        if (!this.diary[this.currentDate]) this.diary[this.currentDate] = [];
+        this.diary[this.currentDate].unshift(entry);
+        this.saveDiary();
+        this.renderDiary();
+        this.syncToGist();
+    }
+
+    deleteDiaryEntry(id) {
+        if (!this.diary[this.currentDate]) return;
+        this.diary[this.currentDate] = this.diary[this.currentDate].filter(e => e.id !== id);
+        this.saveDiary();
+        this.renderDiary();
+        this.syncToGist();
+    }
+
+    renderDiary() {
+        const entries = this.getCurrentDateDiary();
+        const list = document.getElementById('diaryList');
+        const countEl = document.getElementById('diaryCount');
+        if (!list) return;
+
+        countEl.textContent = entries.length > 0 ? `${entries.length}개` : '';
+
+        list.innerHTML = '';
+        if (entries.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'diary-empty';
+            empty.textContent = '아직 기록이 없습니다';
+            list.appendChild(empty);
+            return;
+        }
+
+        entries.forEach(entry => {
+            const el = document.createElement('div');
+            el.className = 'diary-entry';
+
+            const meta = document.createElement('div');
+            meta.className = 'diary-entry-meta';
+
+            const timeEl = document.createElement('span');
+            timeEl.className = 'diary-entry-time';
+            timeEl.textContent = entry.time;
+            meta.appendChild(timeEl);
+
+            if (entry.source === 'imessage') {
+                const src = document.createElement('span');
+                src.className = 'diary-entry-source';
+                src.textContent = '💬 iMessage';
+                meta.appendChild(src);
+            }
+
+            const textEl = document.createElement('div');
+            textEl.className = 'diary-entry-text';
+            textEl.textContent = entry.text;
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'diary-delete-btn';
+            delBtn.textContent = '×';
+            delBtn.onclick = () => this.deleteDiaryEntry(entry.id);
+
+            el.appendChild(meta);
+            el.appendChild(textEl);
+            el.appendChild(delBtn);
+            list.appendChild(el);
+        });
     }
 
     // ── 캘린더 ────────────────────────────────────
@@ -1241,11 +1348,13 @@ class TodoTracker {
                     this.todos = parsed.todos;
                     this.tags = parsed.tags || this.tags;
                     this.habits = parsed.habits || this.habits;
+                    if (parsed.diary) this.diary = parsed.diary;
                 } else {
                     this.todos = parsed;
                 }
                 this.saveTags();
                 this.saveHabits();
+                this.saveDiary();
                 this.saveToLocalStorage();
                 this.renderAddTagSelector();
                 this.render();
@@ -1267,7 +1376,7 @@ class TodoTracker {
         if (!this.gistToken) return;
         this.updateSyncDot('syncing');
         try {
-            const content = JSON.stringify({ todos: this.todos, tags: this.tags, habits: this.habits }, null, 2);
+            const content = JSON.stringify({ todos: this.todos, tags: this.tags, habits: this.habits, diary: this.diary }, null, 2);
             if (!this.gistId) {
                 const res = await fetch('https://api.github.com/gists', {
                     method: 'POST',
@@ -1309,7 +1418,7 @@ class TodoTracker {
     // 페이지 닫힘/백그라운드 전환 시 keepalive fetch로 데이터 손실 방지
     syncToGistKeepAlive() {
         if (!this.gistToken || !this.gistId) return;
-        const content = JSON.stringify({ todos: this.todos, tags: this.tags, habits: this.habits }, null, 2);
+        const content = JSON.stringify({ todos: this.todos, tags: this.tags, habits: this.habits, diary: this.diary }, null, 2);
         try {
             fetch(`https://api.github.com/gists/${this.gistId}`, {
                 method: 'PATCH',
@@ -1936,6 +2045,7 @@ class TodoTracker {
 
         this.updateStats();
         this.renderBacklog();
+        this.renderDiary();
     }
 
     getWeekDates() {
