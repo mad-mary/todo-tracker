@@ -169,77 +169,103 @@
             </div>
         </div>
 
-        <!-- Weekly View -->
+        <!-- Weekly View (Portfolio) -->
         <div id="weeklyView" class="view-container" style="display: none;">
-            <div class="weekly-summary-cards">
-                <div class="weekly-card">
-                    <div class="weekly-card-label">이번 주 집중 점수</div>
-                    <div class="weekly-card-value" id="weeklyFocusScore">0점</div>
+
+            <!-- Period Bar -->
+            <div class="pf-period-bar">
+                <div class="pf-period-nav">
+                    <button class="nav-btn" id="pfPrevWeek">&#9664;</button>
+                    <span class="pf-period-label" id="pfPeriodLabel">—</span>
+                    <button class="nav-btn" id="pfNextWeek">&#9654;</button>
+                    <button class="today-btn" id="pfThisWeek">이번 주</button>
                 </div>
-                <div class="weekly-card">
-                    <div class="weekly-card-label">완료율 평균</div>
-                    <div class="weekly-card-value" id="weeklyCompletionRate">0%</div>
-                </div>
-                <div class="weekly-card">
-                    <div class="weekly-card-label">총 집중 시간</div>
-                    <div class="weekly-card-value" id="weeklyFocusTime">0h 0m</div>
-                </div>
-                <div class="weekly-card">
-                    <div class="weekly-card-label">Hold 비율</div>
-                    <div class="weekly-card-value" id="weeklyHoldRatio">0%</div>
+                <div class="pf-period-toggle">
+                    <button class="pf-toggle-btn pf-toggle-active" id="pfToggleWeek">이번 주</button>
+                    <button class="pf-toggle-btn" id="pfToggleAll">전체 누적</button>
                 </div>
             </div>
 
-            <div class="weekly-section">
-                <h3>집중 vs 홀드</h3>
-                <div class="charts-grid">
-                    <div class="chart-container">
-                        <h4>주별 집중 점수 변동</h4>
-                        <canvas id="focusScoreChart"></canvas>
+            <!-- PO Summary Card -->
+            <div class="pf-summary-card">
+                <p class="pf-section-title">이번 주 나는 어떤 PO였나</p>
+                <div class="pf-summary-headline" id="pfHeadline">—</div>
+                <p class="pf-summary-sub" id="pfSub"></p>
+                <div class="pf-charts-row">
+                    <div class="pf-donut-wrap">
+                        <canvas id="pfDonutChart"></canvas>
+                        <div class="pf-donut-center">
+                            <div class="pf-donut-value" id="pfDonutValue">—</div>
+                            <div class="pf-donut-label" id="pfDonutLabel">—</div>
+                        </div>
                     </div>
-                    <div class="chart-container">
-                        <h4>집중 vs Hold 시간</h4>
-                        <canvas id="focusHoldChart"></canvas>
+                    <div class="pf-bar-wrap">
+                        <canvas id="pfBarChart"></canvas>
                     </div>
                 </div>
+                <div class="pf-cat-legend" id="pfCatLegend"></div>
             </div>
 
-            <div class="weekly-section">
-                <h3>주요 방해 요인</h3>
-                <div class="blockers-list" id="topBlockers"></div>
-            </div>
+            <!-- Insight Cards -->
+            <div class="pf-insight-row" id="pfInsightRow"></div>
 
-            <div class="weekly-section">
-                <h3>태그별 분석</h3>
-                <div class="tag-weekly-breakdown" id="tagWeeklyBreakdown"></div>
-            </div>
-
-            <div class="weekly-section">
-                <div class="stats-row">
-                    <div class="stat-box">
-                        <h3>재시작 패턴</h3>
-                        <div class="stat-detail">
-                            <span class="stat-label">평균 재시작 시간:</span>
-                            <span class="stat-value" id="avgRestartTime">0분</span>
-                        </div>
-                        <div class="stat-detail">
-                            <span class="stat-label">최대:</span>
-                            <span class="stat-value" id="maxRestartTime">0분</span>
-                        </div>
-                    </div>
-                    <div class="stat-box">
-                        <h3>태스크 효율</h3>
-                        <div class="stat-detail">
-                            <span class="stat-label">평균 태스크 완료 시간:</span>
-                            <span class="stat-value" id="avgTaskTime">0분</span>
-                        </div>
-                        <div class="stat-detail">
-                            <span class="stat-label">Hold 발생률:</span>
-                            <span class="stat-value" id="holdOccurrenceRate">0%</span>
+            <!-- Task List -->
+            <div class="pf-task-section">
+                <div class="pf-task-header">
+                    <span class="pf-section-title" style="margin:0;">이번 주 태스크</span>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <span id="pfMissedLabel" class="pf-missed-label"></span>
+                        <div class="pf-period-toggle">
+                            <button class="pf-toggle-btn pf-toggle-active" id="pfFilterAll">전체</button>
+                            <button class="pf-toggle-btn" id="pfFilterMissed">미완료만</button>
                         </div>
                     </div>
                 </div>
+                <div id="pfTaskGroups"></div>
             </div>
+
+            <!-- 기존 집중 통계 (접기) -->
+            <details class="pf-legacy-details">
+                <summary class="pf-legacy-summary">집중 통계 상세 보기 <span>▼</span></summary>
+                <div class="pf-legacy-content">
+                    <div class="weekly-summary-cards">
+                        <div class="weekly-card"><div class="weekly-card-label">이번 주 집중 점수</div><div class="weekly-card-value" id="weeklyFocusScore">0점</div></div>
+                        <div class="weekly-card"><div class="weekly-card-label">완료율 평균</div><div class="weekly-card-value" id="weeklyCompletionRate">0%</div></div>
+                        <div class="weekly-card"><div class="weekly-card-label">총 집중 시간</div><div class="weekly-card-value" id="weeklyFocusTime">0h 0m</div></div>
+                        <div class="weekly-card"><div class="weekly-card-label">Hold 비율</div><div class="weekly-card-value" id="weeklyHoldRatio">0%</div></div>
+                    </div>
+                    <div class="weekly-section" style="margin-top:12px;">
+                        <h3>집중 vs 홀드</h3>
+                        <div class="charts-grid">
+                            <div class="chart-container"><h4>주별 집중 점수 변동</h4><canvas id="focusScoreChart"></canvas></div>
+                            <div class="chart-container"><h4>집중 vs Hold 시간</h4><canvas id="focusHoldChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="weekly-section" style="margin-top:12px;">
+                        <h3>주요 방해 요인</h3>
+                        <div class="blockers-list" id="topBlockers"></div>
+                    </div>
+                    <div class="weekly-section" style="margin-top:12px;">
+                        <h3>태그별 분석</h3>
+                        <div class="tag-weekly-breakdown" id="tagWeeklyBreakdown"></div>
+                    </div>
+                    <div class="weekly-section" style="margin-top:12px;">
+                        <div class="stats-row">
+                            <div class="stat-box">
+                                <h3>재시작 패턴</h3>
+                                <div class="stat-detail"><span class="stat-label">평균 재시작 시간:</span><span class="stat-value" id="avgRestartTime">0분</span></div>
+                                <div class="stat-detail"><span class="stat-label">최대:</span><span class="stat-value" id="maxRestartTime">0분</span></div>
+                            </div>
+                            <div class="stat-box">
+                                <h3>태스크 효율</h3>
+                                <div class="stat-detail"><span class="stat-label">평균 태스크 완료 시간:</span><span class="stat-value" id="avgTaskTime">0분</span></div>
+                                <div class="stat-detail"><span class="stat-label">Hold 발생률:</span><span class="stat-value" id="holdOccurrenceRate">0%</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
         </div>
 
         <!-- Calendar View -->
