@@ -19,6 +19,7 @@
                 <button id="dailyTab" class="tab-btn active">일별</button>
                 <button id="weeklyTab" class="tab-btn">주별</button>
                 <button id="calendarTab" class="tab-btn">캘린더</button>
+                <button id="diaryTab" class="tab-btn">일기</button>
             </div>
             <div class="date-selector" id="dateSelector">
                 <button id="prevDay" class="nav-btn">&#9664;</button>
@@ -55,16 +56,12 @@
                         <div class="backlog-empty">No unresolved tasks</div>
                     </div>
 
-                    <!-- Diary Section -->
+                    <!-- Diary Section (read-only, input via FAB) -->
                     <details class="diary-section" id="diarySection" open>
                         <summary class="diary-summary">
                             <span class="diary-title">✏️ 오늘의 일기</span>
                             <span class="diary-count" id="diaryCount"></span>
                         </summary>
-                        <div class="diary-input-row">
-                            <textarea id="diaryInput" placeholder="오늘 하루를 기록하세요... (Cmd+Enter로 저장)" rows="3"></textarea>
-                            <button id="addDiaryBtn">기록</button>
-                        </div>
                         <div class="diary-list" id="diaryList">
                             <div class="diary-empty">아직 기록이 없습니다</div>
                         </div>
@@ -252,7 +249,34 @@
             </div>
         </div>
 
+        <!-- Diary Feed View -->
+        <div id="diaryView" class="view-container diary-feed-view" style="display: none;">
+            <div class="diary-feed-header">
+                <span class="diary-feed-title">일기 피드</span>
+            </div>
+            <div class="diary-feed" id="diaryFeed">
+                <div class="diary-feed-empty">아직 기록이 없습니다<br><span>우측 하단 버튼을 눌러 첫 일기를 남겨보세요</span></div>
+            </div>
+        </div>
+
     </div><!-- /.container -->
+
+    <!-- Diary FAB (position: fixed) -->
+    <button id="diaryFab" class="diary-fab" title="일기 기록">✏️</button>
+
+    <!-- Diary Compose Modal -->
+    <div id="diaryModal" class="diary-compose-overlay">
+        <div class="diary-compose-modal">
+            <div class="diary-compose-header">
+                <button id="diaryModalClose" class="diary-compose-close">✕</button>
+                <span class="diary-compose-title">새로운 기록</span>
+                <button id="diaryModalSubmit" class="diary-compose-submit">게시</button>
+            </div>
+            <div class="diary-compose-body">
+                <textarea id="diaryModalInput" placeholder="오늘 하루를 기록하세요... (Cmd+Enter로 저장)" rows="5"></textarea>
+            </div>
+        </div>
+    </div>
 
     <div id="tagManageModal" class="modal">
         <div class="modal-content">

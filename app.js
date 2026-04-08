@@ -184,6 +184,13 @@ class TodoTracker {
         // Calendar
         this.calendarTab = document.getElementById('calendarTab');
         this.calendarView = document.getElementById('calendarView');
+        this.diaryTab = document.getElementById('diaryTab');
+        this.diaryView = document.getElementById('diaryView');
+        this.diaryFab = document.getElementById('diaryFab');
+        this.diaryModal = document.getElementById('diaryModal');
+        this.diaryModalInput = document.getElementById('diaryModalInput');
+        this.diaryModalSubmit = document.getElementById('diaryModalSubmit');
+        this.diaryModalClose = document.getElementById('diaryModalClose');
         this.calPrevMonth = document.getElementById('calPrevMonth');
         this.calNextMonth = document.getElementById('calNextMonth');
         this.addHabitBtn = document.getElementById('addHabitBtn');
@@ -220,8 +227,6 @@ class TodoTracker {
         this.syncStatusText = document.getElementById('syncStatusText');
         this.addTodoSection = document.querySelector('.add-todo-section');
         this.streakSummaryEl = document.getElementById('streakSummary');
-        this.diaryInput = document.getElementById('diaryInput');
-        this.addDiaryBtn = document.getElementById('addDiaryBtn');
     }
 
     initEventListeners() {
@@ -262,6 +267,7 @@ class TodoTracker {
 
         this.dailyTab.addEventListener('click', () => this.switchView('daily'));
         this.weeklyTab.addEventListener('click', () => this.switchView('weekly'));
+        this.diaryTab.addEventListener('click', () => this.switchView('diary'));
 
         this.confirmEditBtn.addEventListener('click', () => this.confirmEdit());
         this.cancelEditBtn.addEventListener('click', () => this.cancelEdit());
@@ -336,20 +342,16 @@ class TodoTracker {
             });
         }
 
-        if (this.addDiaryBtn) {
-            this.addDiaryBtn.addEventListener('click', () => {
-                this.addDiaryEntry(this.diaryInput.value);
-                this.diaryInput.value = '';
-            });
-        }
-        if (this.diaryInput) {
-            this.diaryInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                    this.addDiaryEntry(this.diaryInput.value);
-                    this.diaryInput.value = '';
-                }
-            });
-        }
+        this.diaryFab.addEventListener('click', () => this.openDiaryModal());
+        this.diaryModalClose.addEventListener('click', () => this.closeDiaryModal());
+        this.diaryModalSubmit.addEventListener('click', () => this.submitDiaryModal());
+        this.diaryModal.addEventListener('click', (e) => {
+            if (e.target === this.diaryModal) this.closeDiaryModal();
+        });
+        this.diaryModalInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) this.submitDiaryModal();
+            if (e.key === 'Escape') this.closeDiaryModal();
+        });
     }
 
     switchView(view) {
@@ -357,9 +359,11 @@ class TodoTracker {
         this.dailyTab.classList.remove('active');
         this.weeklyTab.classList.remove('active');
         this.calendarTab.classList.remove('active');
+        this.diaryTab.classList.remove('active');
         this.dailyView.style.display = 'none';
         this.weeklyView.style.display = 'none';
         this.calendarView.style.display = 'none';
+        this.diaryView.style.display = 'none';
         this.dateSelector.style.display = 'none';
 
         if (view === 'daily') {
@@ -374,6 +378,10 @@ class TodoTracker {
             this.calendarTab.classList.add('active');
             this.calendarView.style.display = 'block';
             this.renderCalendar();
+        } else if (view === 'diary') {
+            this.diaryTab.classList.add('active');
+            this.diaryView.style.display = 'block';
+            this.renderDiaryFeed();
         }
     }
 
@@ -453,15 +461,109 @@ class TodoTracker {
         this.diary[this.currentDate].unshift(entry);
         this.saveDiary();
         this.renderDiary();
+        if (this.currentView === 'diary') this.renderDiaryFeed();
         this.syncToGist();
     }
 
-    deleteDiaryEntry(id) {
-        if (!this.diary[this.currentDate]) return;
-        this.diary[this.currentDate] = this.diary[this.currentDate].filter(e => e.id !== id);
+    deleteDiaryEntry(id, date = null) {
+        const targetDate = date || this.currentDate;
+        if (!this.diary[targetDate]) return;
+        this.diary[targetDate] = this.diary[targetDate].filter(e => e.id !== id);
         this.saveDiary();
         this.renderDiary();
+        if (this.currentView === 'diary') this.renderDiaryFeed();
         this.syncToGist();
+    }
+
+    openDiaryModal() {
+        this.diaryModal.classList.add('active');
+        this.diaryModalInput.focus();
+    }
+
+    closeDiaryModal() {
+        this.diaryModal.classList.remove('active');
+        this.diaryModalInput.value = '';
+    }
+
+    submitDiaryModal() {
+        const text = this.diaryModalInput.value.trim();
+        if (!text) return;
+        this.addDiaryEntry(text);
+        this.closeDiaryModal();
+    }
+
+    renderDiaryFeed() {
+        const feedEl = document.getElementById('diaryFeed');
+        if (!feedEl) return;
+
+        const dates = Object.keys(this.diary)
+            .filter(d => this.diary[d] && this.diary[d].length > 0)
+            .sort((a, b) => b.localeCompare(a));
+
+        feedEl.innerHTML = '';
+
+        if (dates.length === 0) {
+            feedEl.innerHTML = '<div class="diary-feed-empty">아직 기록이 없습니다<br><span>우측 하단 버튼을 눌러 첫 일기를 남겨보세요</span></div>';
+            return;
+        }
+
+        const today = this.formatDate(new Date());
+        const yesterday = this.formatDate(new Date(Date.now() - 86400000));
+
+        dates.forEach(date => {
+            const entries = [...this.diary[date]].sort((a, b) => b.id - a.id);
+
+            const group = document.createElement('div');
+            group.className = 'diary-feed-group';
+
+            const dateHeader = document.createElement('div');
+            dateHeader.className = 'diary-feed-date';
+            let label;
+            if (date === today) label = '오늘';
+            else if (date === yesterday) label = '어제';
+            else {
+                const d = new Date(date + 'T00:00:00');
+                label = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+            }
+            dateHeader.textContent = label;
+            group.appendChild(dateHeader);
+
+            entries.forEach(entry => {
+                const card = document.createElement('div');
+                card.className = 'diary-feed-card';
+
+                const meta = document.createElement('div');
+                meta.className = 'diary-feed-card-meta';
+
+                const timeEl = document.createElement('span');
+                timeEl.className = 'diary-feed-time';
+                timeEl.textContent = entry.time;
+                meta.appendChild(timeEl);
+
+                if (entry.source === 'imessage') {
+                    const src = document.createElement('span');
+                    src.className = 'diary-entry-source';
+                    src.textContent = '💬 iMessage';
+                    meta.appendChild(src);
+                }
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'diary-delete-btn';
+                delBtn.textContent = '×';
+                delBtn.onclick = () => this.deleteDiaryEntry(entry.id, date);
+
+                const textEl = document.createElement('div');
+                textEl.className = 'diary-feed-card-text';
+                textEl.textContent = entry.text;
+
+                card.appendChild(meta);
+                card.appendChild(delBtn);
+                card.appendChild(textEl);
+                group.appendChild(card);
+            });
+
+            feedEl.appendChild(group);
+        });
     }
 
     renderDiary() {
