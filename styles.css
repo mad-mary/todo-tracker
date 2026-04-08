@@ -2565,22 +2565,27 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
     z-index: 200;
-    align-items: center;
-    justify-content: center;
 }
 .diary-compose-overlay.active {
-    display: flex;
+    display: block;
 }
 .diary-compose-modal {
+    position: fixed;
+    bottom: 96px;
+    right: 32px;
     background: var(--surface);
     border-radius: 16px;
-    width: 440px;
-    max-width: 92vw;
+    width: 360px;
+    max-width: calc(100vw - 48px);
     border: 1px solid var(--surface-alt);
     overflow: hidden;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    animation: diary-modal-in 0.18s ease;
+}
+@keyframes diary-modal-in {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .diary-compose-header {
     display: flex;
