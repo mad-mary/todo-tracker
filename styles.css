@@ -179,8 +179,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     background: var(--surface);
     border-radius: var(--radius);
     padding: 20px;
-    position: sticky;
-    top: 24px;
+    position: static;
+    display: flex;
+    flex-direction: column;
 }
 
 .backlog-header {
@@ -2133,9 +2134,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* ── Diary Section ──────────────────────────────────── */
 .diary-section {
     margin-top: 20px;
-    background: var(--surface);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
+    padding-top: 16px;
+    background: transparent;
+    border-radius: 0;
+    border: none;
+    border-top: 1px solid var(--border);
     overflow: hidden;
 }
 
@@ -2563,28 +2566,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 .pf-cat-dropdown-item:hover { background: var(--surface-hover); }
 
-/* Legacy (collapsible) */
-.pf-legacy-details {
-    background: var(--surface);
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 12px;
-}
-.pf-legacy-summary {
-    padding: 16px 24px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted);
-    list-style: none;
-    user-select: none;
-}
-.pf-legacy-summary::-webkit-details-marker { display: none; }
-.pf-legacy-summary:hover { color: var(--text); }
-.pf-legacy-content { padding: 0 0 4px; }
 
 /* Responsive */
 @media (max-width: 640px) {

@@ -45,7 +45,7 @@
         <div id="dailyView" class="view-container">
             <div class="daily-layout">
 
-                <!-- Left Sidebar: Backlog -->
+                <!-- Left Sidebar: Backlog + Diary -->
                 <aside class="backlog-sidebar">
                     <div class="backlog-header">
                         <div class="backlog-title">백로그</div>
@@ -54,6 +54,21 @@
                     <div class="backlog-list" id="backlogList">
                         <div class="backlog-empty">No unresolved tasks</div>
                     </div>
+
+                    <!-- Diary Section -->
+                    <details class="diary-section" id="diarySection" open>
+                        <summary class="diary-summary">
+                            <span class="diary-title">✏️ 오늘의 일기</span>
+                            <span class="diary-count" id="diaryCount"></span>
+                        </summary>
+                        <div class="diary-input-row">
+                            <textarea id="diaryInput" placeholder="오늘 하루를 기록하세요... (Cmd+Enter로 저장)" rows="3"></textarea>
+                            <button id="addDiaryBtn">기록</button>
+                        </div>
+                        <div class="diary-list" id="diaryList">
+                            <div class="diary-empty">아직 기록이 없습니다</div>
+                        </div>
+                    </details>
                 </aside>
 
                 <!-- Main Content -->
@@ -150,21 +165,6 @@
 
                     <!-- Task List -->
                     <div class="todo-list" id="todoList"></div>
-
-                    <!-- Diary Section -->
-                    <details class="diary-section" id="diarySection" open>
-                        <summary class="diary-summary">
-                            <span class="diary-title">✏️ 오늘의 일기</span>
-                            <span class="diary-count" id="diaryCount"></span>
-                        </summary>
-                        <div class="diary-input-row">
-                            <textarea id="diaryInput" placeholder="오늘 하루를 기록하세요... (Cmd+Enter로 저장)" rows="3"></textarea>
-                            <button id="addDiaryBtn">기록</button>
-                        </div>
-                        <div class="diary-list" id="diaryList">
-                            <div class="diary-empty">아직 기록이 없습니다</div>
-                        </div>
-                    </details>
                 </div>
             </div>
         </div>
@@ -224,47 +224,6 @@
                 <div id="pfTaskGroups"></div>
             </div>
 
-            <!-- 기존 집중 통계 (접기) -->
-            <details class="pf-legacy-details">
-                <summary class="pf-legacy-summary">집중 통계 상세 보기 <span>▼</span></summary>
-                <div class="pf-legacy-content">
-                    <div class="weekly-summary-cards">
-                        <div class="weekly-card"><div class="weekly-card-label">이번 주 집중 점수</div><div class="weekly-card-value" id="weeklyFocusScore">0점</div></div>
-                        <div class="weekly-card"><div class="weekly-card-label">완료율 평균</div><div class="weekly-card-value" id="weeklyCompletionRate">0%</div></div>
-                        <div class="weekly-card"><div class="weekly-card-label">총 집중 시간</div><div class="weekly-card-value" id="weeklyFocusTime">0h 0m</div></div>
-                        <div class="weekly-card"><div class="weekly-card-label">Hold 비율</div><div class="weekly-card-value" id="weeklyHoldRatio">0%</div></div>
-                    </div>
-                    <div class="weekly-section" style="margin-top:12px;">
-                        <h3>집중 vs 홀드</h3>
-                        <div class="charts-grid">
-                            <div class="chart-container"><h4>주별 집중 점수 변동</h4><canvas id="focusScoreChart"></canvas></div>
-                            <div class="chart-container"><h4>집중 vs Hold 시간</h4><canvas id="focusHoldChart"></canvas></div>
-                        </div>
-                    </div>
-                    <div class="weekly-section" style="margin-top:12px;">
-                        <h3>주요 방해 요인</h3>
-                        <div class="blockers-list" id="topBlockers"></div>
-                    </div>
-                    <div class="weekly-section" style="margin-top:12px;">
-                        <h3>태그별 분석</h3>
-                        <div class="tag-weekly-breakdown" id="tagWeeklyBreakdown"></div>
-                    </div>
-                    <div class="weekly-section" style="margin-top:12px;">
-                        <div class="stats-row">
-                            <div class="stat-box">
-                                <h3>재시작 패턴</h3>
-                                <div class="stat-detail"><span class="stat-label">평균 재시작 시간:</span><span class="stat-value" id="avgRestartTime">0분</span></div>
-                                <div class="stat-detail"><span class="stat-label">최대:</span><span class="stat-value" id="maxRestartTime">0분</span></div>
-                            </div>
-                            <div class="stat-box">
-                                <h3>태스크 효율</h3>
-                                <div class="stat-detail"><span class="stat-label">평균 태스크 완료 시간:</span><span class="stat-value" id="avgTaskTime">0분</span></div>
-                                <div class="stat-detail"><span class="stat-label">Hold 발생률:</span><span class="stat-value" id="holdOccurrenceRate">0%</span></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </details>
 
         </div>
 
