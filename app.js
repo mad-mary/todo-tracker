@@ -476,6 +476,9 @@ class TodoTracker {
     }
 
     openDiaryModal() {
+        const d = new Date(this.currentDate + 'T00:00:00');
+        const label = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+        document.getElementById('diaryModalTitle').textContent = label;
         this.diaryModal.classList.add('active');
         this.diaryModalInput.focus();
     }
