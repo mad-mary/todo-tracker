@@ -954,10 +954,13 @@ class TodoTracker {
         const text = this.todoInput.value.trim();
         if (!text) return;
 
+        const autoTagIds = this.autoAssignTagsFromText(text);
+        const mergedTagIds = [...new Set([...this.selectedTagIds, ...autoTagIds])];
+
         const todo = {
             id: Date.now(),
             text: text,
-            tags: [...this.selectedTagIds],
+            tags: mergedTagIds,
             memo: '',
             completed: false,
             startTime: null,
@@ -973,6 +976,26 @@ class TodoTracker {
         this.renderAddTagSelector();
         this.saveToLocalStorage();
         this.render();
+    }
+
+    autoAssignTagsFromText(text) {
+        const catIds = this.pfAutoClassifyMultiple(text);
+        if (!catIds.length) return [];
+        const categories = this.pfCategories();
+        const tagIds = [];
+        catIds.forEach((catId, i) => {
+            const cat = categories.find(c => c.id === catId);
+            if (!cat) return;
+            let tag = this.tags.find(t => t.name.toLowerCase() === cat.label.toLowerCase());
+            if (!tag) {
+                tag = { id: Date.now() + i + 1, name: cat.label, color: cat.color };
+                this.tags.push(tag);
+                this.saveTags();
+                this.renderTagChips();
+            }
+            tagIds.push(tag.id);
+        });
+        return tagIds;
     }
 
     // ── Feature 1: 태스크 기록 자동완성 ─────────────
@@ -2232,6 +2255,34 @@ class TodoTracker {
         return this.pfCatOverrides[todoId] || this.pfAutoClassify(taskName);
     }
 
+    pfAutoClassifyMultiple(name) {
+        const n = (name || '').toLowerCase();
+        const results = new Set();
+        const prefixMap = {
+            '요청': 'stakeholder', '작업공유': 'stakeholder', '회의': 'stakeholder',
+            '미팅': 'stakeholder', '싱크': 'stakeholder', '공유': 'stakeholder',
+            '보고': 'stakeholder', '리마인드': 'stakeholder',
+            '리서치': 'discovery', '분석': 'discovery',
+            '기획': 'delivery', '검토': 'delivery',
+            '운영': 'operations', '대응': 'operations', '배포': 'operations',
+        };
+        const prefixMatch = name.match(/^\[(.+?)\]/);
+        if (prefixMatch && prefixMap[prefixMatch[1]]) results.add(prefixMap[prefixMatch[1]]);
+
+        const kwMap = [
+            { cat: 'stakeholder', words: ['공유', '싱크', '협의', '발표', '보고', '회의', '미팅', '리마인드'] },
+            { cat: 'discovery',   words: ['보고서', '로그 분석', '데이터 분석', '지표', '수치', '리서치', '인터뷰', '탐색', '설문', '전환율', '경쟁사', 'abt'] },
+            { cat: 'planning',    words: ['로드맵', '우선순위', '계획', 'okr', '분기', '전략', '백로그'] },
+            { cat: 'operations',  words: ['이슈', '대응', '운영', 'cs', '처리', '모니터링', '트래킹', '배포', '노출', '릴리즈'] },
+            { cat: 'learning',    words: ['스터디', '교육', '세미나', '학습', '회고', '강의'] },
+            { cat: 'delivery',    words: ['작성', '확인', '스펙', 'prd', 'ubl', '기획서', '초안', '최종본', '로직', '검수', '피드백', '문서', 'qa', '와이어', '정리', '수정', '검토', '보완', '작업', '정의'] },
+        ];
+        for (const { cat, words } of kwMap) {
+            if (words.some(w => n.includes(w))) results.add(cat);
+        }
+        return [...results];
+    }
+
     pfSaveOverrides() {
         localStorage.setItem('pfCatOverrides', JSON.stringify(this.pfCatOverrides));
     }
@@ -2439,8 +2490,7 @@ class TodoTracker {
             .map(c => {
                 const list = grouped[c.id];
                 const done = list.filter(t => t.done).length;
-                const rows = list.map((t, i) => {
-                    const key = `${c.id}_${i}`;
+                const rows = list.map((t) => {
                     const rightEl = t.done
                         ? `<span class="pf-task-date">${t.completedDate} 완료</span>`
                         : `<span class="pf-task-reason">${t.reason || '미착수'}</span>`;
