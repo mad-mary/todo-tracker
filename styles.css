@@ -55,7 +55,7 @@ header {
     align-items: center;
     gap: 20px;
     margin-bottom: 28px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 header h1 {

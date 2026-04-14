@@ -364,12 +364,12 @@ class TodoTracker {
         this.weeklyView.style.display = 'none';
         this.calendarView.style.display = 'none';
         this.diaryView.style.display = 'none';
-        this.dateSelector.style.display = 'none';
+        this.dateSelector.style.visibility = 'hidden';
 
         if (view === 'daily') {
             this.dailyTab.classList.add('active');
             this.dailyView.style.display = 'block';
-            this.dateSelector.style.display = 'flex';
+            this.dateSelector.style.visibility = 'visible';
         } else if (view === 'weekly') {
             this.weeklyTab.classList.add('active');
             this.weeklyView.style.display = 'block';
