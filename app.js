@@ -1481,10 +1481,31 @@ class TodoTracker {
             if (content) {
                 const parsed = JSON.parse(content);
                 if (parsed.todos) {
-                    this.todos = parsed.todos;
+                    // Merge: Gist에만 있는 항목(외부 추가)을 로컬에 반영
+                    for (const date in parsed.todos) {
+                        if (!this.todos[date]) {
+                            this.todos[date] = parsed.todos[date];
+                        } else {
+                            const localIds = new Set(this.todos[date].map(t => t.id));
+                            for (const todo of parsed.todos[date]) {
+                                if (!localIds.has(todo.id)) this.todos[date].push(todo);
+                            }
+                        }
+                    }
                     this.tags = parsed.tags || this.tags;
                     this.habits = parsed.habits || this.habits;
-                    if (parsed.diary) this.diary = parsed.diary;
+                    if (parsed.diary) {
+                        for (const date in parsed.diary) {
+                            if (!this.diary[date]) {
+                                this.diary[date] = parsed.diary[date];
+                            } else {
+                                const localIds = new Set(this.diary[date].map(e => e.id));
+                                for (const entry of parsed.diary[date]) {
+                                    if (!localIds.has(entry.id)) this.diary[date].unshift(entry);
+                                }
+                            }
+                        }
+                    }
                 } else {
                     this.todos = parsed;
                 }
@@ -1505,7 +1526,10 @@ class TodoTracker {
     startSyncInterval() {
         clearInterval(this.syncIntervalTimer);
         if (!this.gistToken) return;
-        this.syncIntervalTimer = setInterval(() => this.syncToGist(), this.SYNC_INTERVAL_MS);
+        this.syncIntervalTimer = setInterval(async () => {
+            await this.syncFromGist();
+            await this.syncToGist();
+        }, this.SYNC_INTERVAL_MS);
     }
 
     async syncToGist() {
