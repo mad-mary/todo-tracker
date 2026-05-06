@@ -2910,4 +2910,64 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     .pf-bar-wrap {
         width: 100%;
     }
+
+    /* ── 매일습관: 레이아웃 ── */
+    .calendar-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    /* 스트릭 사이드바: sticky 해제, 가로 스크롤 카드 */
+    .streak-sidebar {
+        position: static;
+        padding: 14px;
+    }
+    .streak-cards-grid {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 10px;
+        padding-bottom: 4px;
+        scroll-snap-type: x mandatory;
+    }
+    .streak-card-v2 {
+        min-width: 140px;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+    }
+
+    /* 캘린더 셀 축소 */
+    .cal-cell {
+        min-height: 44px;
+        padding: 4px 2px;
+        gap: 2px;
+    }
+    .cal-day-num {
+        font-size: 11px;
+        width: 20px;
+        height: 20px;
+    }
+    .cal-cell.today .cal-day-num {
+        width: 20px;
+        height: 20px;
+        font-size: 11px;
+    }
+
+    /* 스탬프 축소 */
+    .cal-stamp {
+        font-size: 13px;
+        width: 20px;
+        height: 20px;
+    }
+    .cal-stamps {
+        gap: 2px;
+    }
+
+    /* 습관 범례 가로 스크롤 */
+    .habit-legend {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+    }
 }
