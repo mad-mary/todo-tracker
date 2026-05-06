@@ -269,6 +269,20 @@ class TodoTracker {
         this.weeklyTab.addEventListener('click', () => this.switchView('weekly'));
         this.diaryTab.addEventListener('click', () => this.switchView('diary'));
 
+        // 모바일 하단 탭바
+        document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.switchView(btn.dataset.view));
+        });
+
+        // 모바일 백로그 토글
+        const backlogToggle = document.getElementById('backlogMobileToggle');
+        if (backlogToggle) {
+            backlogToggle.addEventListener('click', () => {
+                document.getElementById('backlogSidebarInner').classList.toggle('open');
+                document.getElementById('backlogMobileChevron').classList.toggle('open');
+            });
+        }
+
         this.confirmEditBtn.addEventListener('click', () => this.confirmEdit());
         this.cancelEditBtn.addEventListener('click', () => this.cancelEdit());
         this.editModal.addEventListener('click', (e) => {
@@ -360,6 +374,9 @@ class TodoTracker {
         this.weeklyTab.classList.remove('active');
         this.calendarTab.classList.remove('active');
         this.diaryTab.classList.remove('active');
+        document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === view);
+        });
         this.dailyView.style.display = 'none';
         this.weeklyView.style.display = 'none';
         this.calendarView.style.display = 'none';
@@ -1933,6 +1950,13 @@ class TodoTracker {
                 .filter(t => !t.completed)
                 .forEach(t => backlogItems.push({ id: t.id, text: t.text, date }));
         });
+
+        // 모바일 배지 업데이트
+        const badge = document.getElementById('backlogMobileBadge');
+        if (badge) {
+            badge.textContent = backlogItems.length;
+            badge.classList.toggle('visible', backlogItems.length > 0);
+        }
 
         if (backlogItems.length === 0) {
             this.backlogList.innerHTML = '<div class="backlog-empty">No unresolved tasks</div>';

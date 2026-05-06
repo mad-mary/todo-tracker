@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Mad Mode</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -48,6 +48,13 @@
 
                 <!-- Left Sidebar: Backlog + Diary -->
                 <aside class="backlog-sidebar">
+                    <button class="backlog-mobile-toggle" id="backlogMobileToggle">
+                        <span class="backlog-mobile-toggle-left">
+                            백로그 <span class="backlog-mobile-badge" id="backlogMobileBadge"></span>
+                        </span>
+                        <span class="backlog-mobile-chevron" id="backlogMobileChevron">▼</span>
+                    </button>
+                    <div class="backlog-sidebar-inner" id="backlogSidebarInner">
                     <div class="backlog-header">
                         <div class="backlog-title">백로그</div>
                         <div class="backlog-subtitle">이전 미완료 태스크</div>
@@ -66,6 +73,7 @@
                             <div class="diary-empty">아직 기록이 없습니다</div>
                         </div>
                     </details>
+                    </div><!-- /.backlog-sidebar-inner -->
                 </aside>
 
                 <!-- Main Content -->
@@ -260,6 +268,14 @@
         </div>
 
     </div><!-- /.container -->
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav">
+        <button class="mobile-tab-btn active" data-view="daily">할일</button>
+        <button class="mobile-tab-btn" data-view="weekly">포트폴리오</button>
+        <button class="mobile-tab-btn" data-view="calendar">매일습관</button>
+        <button class="mobile-tab-btn" data-view="diary">매일생각</button>
+    </nav>
 
     <!-- Diary FAB (position: fixed) -->
     <button id="diaryFab" class="diary-fab" title="일기 기록">✏️</button>
