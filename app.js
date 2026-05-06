@@ -1976,6 +1976,10 @@ class TodoTracker {
     renderTodoItem(todo) {
         const div = document.createElement('div');
         div.className = `todo-item ${todo.completed ? 'completed' : ''} ${todo.running ? 'running' : ''} ${todo.onHold ? 'on-hold' : ''}`;
+        if (!todo.completed && !todo.running && !todo.onHold && todo.tags && todo.tags.length > 0) {
+            const firstTag = this.tags.find(t => t.id === todo.tags[0]);
+            if (firstTag) div.style.borderLeftColor = firstTag.color;
+        }
 
         const header = document.createElement('div');
         header.className = 'todo-header';
@@ -1995,19 +1999,6 @@ class TodoTracker {
             holdStatus.className = 'hold-status';
             holdStatus.textContent = '홀드 중';
             textWrapper.appendChild(holdStatus);
-        }
-
-        if (todo.tags && todo.tags.length > 0) {
-            todo.tags.forEach(tagId => {
-                const tag = this.tags.find(t => t.id === tagId);
-                if (tag) {
-                    const chip = document.createElement('span');
-                    chip.className = 'tag-chip-small';
-                    chip.style.setProperty('--tag-color', tag.color);
-                    chip.textContent = tag.name;
-                    textWrapper.appendChild(chip);
-                }
-            });
         }
 
         const editBtn = document.createElement('button');
