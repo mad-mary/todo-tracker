@@ -1996,6 +1996,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     color: var(--tag-color, var(--green));
     background: transparent;
     white-space: nowrap;
+    margin-left: 6px;
+    flex-shrink: 0;
 }
 
 /* Tag selector in add / edit sections */

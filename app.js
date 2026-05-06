@@ -1997,6 +1997,19 @@ class TodoTracker {
             textWrapper.appendChild(holdStatus);
         }
 
+        if (todo.tags && todo.tags.length > 0) {
+            todo.tags.forEach(tagId => {
+                const tag = this.tags.find(t => t.id === tagId);
+                if (tag) {
+                    const chip = document.createElement('span');
+                    chip.className = 'tag-chip-small';
+                    chip.style.setProperty('--tag-color', tag.color);
+                    chip.textContent = tag.name;
+                    textWrapper.appendChild(chip);
+                }
+            });
+        }
+
         const editBtn = document.createElement('button');
         editBtn.className = 'edit-btn';
         editBtn.textContent = '수정';
@@ -2058,23 +2071,6 @@ class TodoTracker {
         }
 
         div.appendChild(header);
-
-        if (todo.tags && todo.tags.length > 0) {
-            const tagRow = document.createElement('div');
-            tagRow.className = 'todo-tag-row';
-            todo.tags.forEach(tagId => {
-                const tag = this.tags.find(t => t.id === tagId);
-                if (tag) {
-                    const chip = document.createElement('span');
-                    chip.className = 'tag-chip-small';
-                    chip.style.setProperty('--tag-color', tag.color);
-                    chip.textContent = tag.name;
-                    tagRow.appendChild(chip);
-                }
-            });
-            div.appendChild(tagRow);
-        }
-
         div.appendChild(controls);
 
         if (todo.running || todo.onHold || todo.completed) {
