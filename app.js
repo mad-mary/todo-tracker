@@ -1922,7 +1922,7 @@ class TodoTracker {
     renderBacklog() {
         if (!this.backlogList) return;
 
-        const today = this.currentDate;
+        const today = this.formatDate(new Date());
         const allDates = Object.keys(this.todos)
             .filter(date => date < today)
             .sort((a, b) => b.localeCompare(a));
