@@ -2916,6 +2916,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         display: flex;
         flex-direction: column;
         gap: 12px;
+        align-items: stretch;
     }
 
     /* 스트릭 사이드바: sticky 해제, 가로 스크롤 카드 */
