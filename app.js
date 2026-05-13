@@ -524,13 +524,18 @@ class TodoTracker {
 
         feedEl.innerHTML = '';
 
+        const totalCount = dates.reduce((sum, d) => sum + (this.diary[d]?.length || 0), 0);
+        const countEl = document.getElementById('diaryFeedCount');
+        if (countEl) countEl.textContent = `${totalCount} entries`;
+
         if (dates.length === 0) {
-            feedEl.innerHTML = '<div class="diary-feed-empty">아직 기록이 없습니다<br><span>우측 하단 버튼을 눌러 첫 일기를 남겨보세요</span></div>';
+            feedEl.innerHTML = '<div class="diary-feed-empty">아직 기록이 없습니다<br><span>우측 하단 버튼을 눌러 첫 생각을 남겨보세요</span></div>';
             return;
         }
 
         const today = this.formatDate(new Date());
         const yesterday = this.formatDate(new Date(Date.now() - 86400000));
+        const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
         dates.forEach(date => {
             const entries = [...this.diary[date]].sort((a, b) => b.id - a.id);
@@ -540,14 +545,12 @@ class TodoTracker {
 
             const dateHeader = document.createElement('div');
             dateHeader.className = 'diary-feed-date';
-            let label;
-            if (date === today) label = '오늘';
-            else if (date === yesterday) label = '어제';
-            else {
-                const d = new Date(date + 'T00:00:00');
-                label = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
-            }
-            dateHeader.textContent = label;
+            const d = new Date(date + 'T00:00:00');
+            const monthStr = monthNames[d.getMonth()];
+            const dayStr = d.getDate();
+            if (date === today) dateHeader.textContent = `오늘 · ${monthStr} ${dayStr}`;
+            else if (date === yesterday) dateHeader.textContent = `어제 · ${monthStr} ${dayStr}`;
+            else dateHeader.textContent = `${monthStr} ${dayStr}`;
             group.appendChild(dateHeader);
 
             entries.forEach(entry => {
@@ -562,16 +565,9 @@ class TodoTracker {
                 timeEl.textContent = entry.time;
                 meta.appendChild(timeEl);
 
-                if (entry.source === 'imessage') {
-                    const src = document.createElement('span');
-                    src.className = 'diary-entry-source';
-                    src.textContent = '💬 iMessage';
-                    meta.appendChild(src);
-                }
-
                 const delBtn = document.createElement('button');
                 delBtn.className = 'diary-delete-btn';
-                delBtn.textContent = '×';
+                delBtn.textContent = '✕';
                 delBtn.onclick = () => this.deleteDiaryEntry(entry.id, date);
 
                 const textEl = document.createElement('div');
@@ -581,6 +577,14 @@ class TodoTracker {
                 card.appendChild(meta);
                 card.appendChild(delBtn);
                 card.appendChild(textEl);
+
+                if (entry.source === 'imessage') {
+                    const src = document.createElement('div');
+                    src.className = 'diary-entry-source';
+                    src.textContent = 'iMessage에서 등록';
+                    card.appendChild(src);
+                }
+
                 group.appendChild(card);
             });
 

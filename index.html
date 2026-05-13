@@ -7,7 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
@@ -260,10 +260,11 @@
         <!-- Diary Feed View -->
         <div id="diaryView" class="view-container diary-feed-view" style="display: none;">
             <div class="diary-feed-header">
-                <span class="diary-feed-title">일기 피드</span>
+                <span class="diary-feed-title">매일생각</span>
+                <span class="diary-feed-count" id="diaryFeedCount"></span>
             </div>
             <div class="diary-feed" id="diaryFeed">
-                <div class="diary-feed-empty">아직 기록이 없습니다<br><span>우측 하단 버튼을 눌러 첫 일기를 남겨보세요</span></div>
+                <div class="diary-feed-empty">아직 기록이 없습니다<br><span>우측 하단 버튼을 눌러 첫 생각을 남겨보세요</span></div>
             </div>
         </div>
 
@@ -278,19 +279,22 @@
     </nav>
 
     <!-- Diary FAB (position: fixed) -->
-    <button id="diaryFab" class="diary-fab" title="일기 기록">✏️</button>
+    <button id="diaryFab" class="diary-fab" title="일기 기록">+ 기록</button>
 
     <!-- Diary Compose Modal -->
     <div id="diaryModal" class="diary-compose-overlay">
         <div class="diary-compose-modal">
             <div class="diary-compose-header">
-                <button id="diaryModalClose" class="diary-compose-close">✕</button>
                 <span class="diary-compose-title" id="diaryModalTitle"></span>
-                <button id="diaryModalSubmit" class="diary-compose-submit">쓰기</button>
+                <div class="diary-compose-actions">
+                    <button id="diaryModalClose" class="diary-compose-close">취소</button>
+                    <button id="diaryModalSubmit" class="diary-compose-submit">저장</button>
+                </div>
             </div>
             <div class="diary-compose-body">
-                <textarea id="diaryModalInput" placeholder="오늘 하루를 기록하세요... (Cmd+Enter로 저장)" rows="5"></textarea>
+                <textarea id="diaryModalInput" placeholder="오늘 어떤 생각이 들었나요..." rows="6"></textarea>
             </div>
+            <div class="diary-compose-footer">Cmd+Enter로 저장 · Esc로 닫기</div>
         </div>
     </div>
 
